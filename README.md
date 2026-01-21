@@ -211,11 +211,13 @@ server: {
 
 ## 📝 License
 
-© 2024 All Rights Reserved
+© 2026 All Rights Reserved by [Mahmudul Hasan Bhuia](https://www.linkedin.com/in/bhuiamh/)
 
 This software is proprietary. Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 ## 👥 Credits
+
+**[Mahmudul Hasan Bhuia](https://www.linkedin.com/in/bhuiamh/)** RAN Engineer | NYBSYS Inc.
 
 **Developed for RAN Engineers**
 
@@ -234,6 +236,6 @@ For issues, questions, or feature requests, please contact your development team
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: 2024  
+**Last Updated**: January 21, 2026  
 **Target Audience**: RAN Engineers, Network Configuration Specialists
 
