@@ -122,10 +122,12 @@ export function XmlComparison() {
           const pattern = quickFilterPatterns[excludedKey];
           if (pattern) {
             const patLower = pattern.toLowerCase();
-            // Match pattern followed by [ (array index) or at end of string to avoid substring matches
+            // Match pattern: check for pattern followed by [ (for nested elements) or at end of string
+            // Also check if path starts with pattern (for root-level paths)
             if (
               path.includes(patLower + "[") ||
-              path.endsWith(patLower)
+              path.endsWith(patLower) ||
+              path.includes(patLower + ".")
             ) {
               return false; // Exclude this item
             }
