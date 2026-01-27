@@ -1,4 +1,4 @@
-# Femto Device XML Comparator & Editor
+# FemtoXML Studio
 
 **Professional XML comparison and editing tool designed for RAN Engineers**
 
@@ -236,6 +236,6 @@ For issues, questions, or feature requests, please contact your development team
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: January 21, 2026  
+**Last Updated**: January 25, 2026  
 **Target Audience**: RAN Engineers, Network Configuration Specialists
 
