@@ -74,7 +74,20 @@ function App() {
             FemtoXML Studio — Professional XML Comparator & Editor for RAN
             engineers
           </p>
-          <p>© {new Date().getFullYear()} FemtoXML Studio</p>
+          <p className="mb-2">
+            © {new Date().getFullYear()} FemtoXML Studio. Developed by{" "}
+            <a
+              href="https://www.linkedin.com/in/bhuiamh/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-slate-600 hover:text-slate-900 underline transition"
+            >
+              Mahmudul Hasan Bhuia
+            </a>
+          </p>
+          <p className="text-slate-400">
+            Open-source XML comparison and editing tool
+          </p>
         </footer>
       </div>
     </div>
