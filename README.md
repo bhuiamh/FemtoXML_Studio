@@ -2,7 +2,7 @@
 
 **Professional XML comparison and editing tool designed for RAN Engineers**
 
-A robust, high-performance web application for comparing and editing large-scale XML device configurations. Optimized to handle XML files with 14,000+ parameters efficiently using Web Workers and virtual scrolling.
+A robust, high-performance web application for comparing and editing large-scale XML device configurations. Optimized to handle XML files with large parameters efficiently using Web Workers and virtual scrolling.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
@@ -10,7 +10,7 @@ A robust, high-performance web application for comparing and editing large-scale
 ## 🚀 Features
 
 ### XML Comparison Module
-- **Large-Scale Processing**: Handles XML files with 14,000+ parameters efficiently
+- **Large-Scale Processing**: Handles XML files with large parameters efficiently
 - **Web Worker Architecture**: Comparison runs in background threads, keeping UI responsive
 - **Real-time Progress**: Live progress bar with percentage during comparison
 - **Smart Filtering**:
@@ -217,7 +217,7 @@ This software is proprietary. Unauthorized copying, modification, distribution, 
 
 ## 👥 Credits
 
-**[Mahmudul Hasan Bhuia](https://www.linkedin.com/in/bhuiamh/)** RAN Engineer | NYBSYS Inc.
+**[Mahmudul Hasan Bhuia](https://www.linkedin.com/in/bhuiamh/)** | RAN Engineer | NYBSYS Inc.
 
 **Developed for RAN Engineers**
 
@@ -236,6 +236,6 @@ For issues, questions, or feature requests, please contact your development team
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: January 25, 2026  
+**Last Updated**: January 28, 2026  
 **Target Audience**: RAN Engineers, Network Configuration Specialists
 
