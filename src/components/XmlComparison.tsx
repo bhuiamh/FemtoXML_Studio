@@ -37,6 +37,49 @@ function formatValue(value?: string) {
   return value;
 }
 
+function extractValueFromXml(xmlString: string, path: string): string | null {
+  try {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+    
+    if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+      return null;
+    }
+    
+    // Parse path like "Device[1].IPsec[1].Profile[1].i1[1].X_2C7AF4_LocalId[1]/#text"
+    const parts = path.split(".");
+    let node: Node = xmlDoc as any;
+    
+    for (const part of parts) {
+      if (part === "#text") {
+        return node.textContent || null;
+      }
+      
+      // Extract element name and index like "Device[1]" -> ["Device", "1"]
+      const match = part.match(/^([a-zA-Z_][a-zA-Z0-9_]*)(?:\[(\d+)\])?$/);
+      if (!match) continue;
+      
+      const elementName = match[1];
+      const index = match[2] ? parseInt(match[2]) - 1 : 0; // Convert to 0-based
+      
+      // Find matching child elements
+      const children = Array.from(node.childNodes).filter(
+        (n) => n.nodeName === elementName
+      ) as Element[];
+      
+      if (!children[index]) {
+        return null;
+      }
+      
+      node = children[index];
+    }
+    
+    return node.textContent || null;
+  } catch {
+    return null;
+  }
+}
+
 const quickFilterPatterns: Record<QuickFilterKey, string | null> = {
   FaultMgmt: "Device[1].FaultMgmt[1]",
   NeighborList:
@@ -51,6 +94,8 @@ export function XmlComparison() {
   const [lastRun, setLastRun] = useState<Date | null>(null);
   const [leftFileName, setLeftFileName] = useState<string | null>(null);
   const [rightFileName, setRightFileName] = useState<string | null>(null);
+  const [leftFileValue, setLeftFileValue] = useState<string | null>(null);
+  const [rightFileValue, setRightFileValue] = useState<string | null>(null);
   const [leftFileLoading, setLeftFileLoading] = useState(false);
   const [rightFileLoading, setRightFileLoading] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
@@ -70,6 +115,7 @@ export function XmlComparison() {
       changed: true,
     },
   );
+  console.log("leftFileName............leftFileValue", leftFileValue);
   const [excludedQuickFilters, setExcludedQuickFilters] = useState<
     Set<Exclude<QuickFilterKey, "all">>
   >(new Set());
@@ -243,11 +289,16 @@ export function XmlComparison() {
     const reader = new FileReader();
     reader.onload = () => {
       const content = reader.result?.toString() ?? "";
+      const xmlPath = "Device[1].IPsec[1].Profile[1].i1[1].X_2C7AF4_LocalId[1]";
+      const extractedValue = extractValueFromXml(content, xmlPath);
+      
       if (side === "left") {
         setLeftXml(content);
+        setLeftFileValue(extractedValue);
         setLeftFileLoading(false);
       } else {
         setRightXml(content);
+        setRightFileValue(extractedValue);
         setRightFileLoading(false);
       }
     };
@@ -372,12 +423,17 @@ export function XmlComparison() {
             </h2>
             <div className="flex items-center gap-3">
               {leftFileName && (
-                <span
-                  className="max-w-[220px] truncate text-xs text-slate-500"
-                  title={leftFileName}
-                >
-                  {leftFileName}
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span
+                    className="max-w-[220px] truncate text-xs text-slate-500"
+                    title={leftFileName}
+                  >
+                    {leftFileName}
+                  </span>
+                  <span className="max-w-[220px] truncate text-xs font-semibold text-primary">
+                    {formatValue(leftFileValue ?? undefined)}
+                  </span>
+                </div>
               )}
               {leftFileLoading && (
                 <span className="inline-flex items-center gap-1 text-xs text-slate-500">
@@ -418,12 +474,17 @@ export function XmlComparison() {
             </h2>
             <div className="flex items-center gap-3">
               {rightFileName && (
-                <span
-                  className="max-w-[220px] truncate text-xs text-slate-500"
-                  title={rightFileName}
-                >
-                  {rightFileName}
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span
+                    className="max-w-[220px] truncate text-xs text-slate-500"
+                    title={rightFileName}
+                  >
+                    {rightFileName}
+                  </span>
+                  <span className="max-w-[220px] truncate text-xs font-semibold text-primary">
+                    {formatValue(rightFileValue ?? undefined)}
+                  </span>
+                </div>
               )}
               {rightFileLoading && (
                 <span className="inline-flex items-center gap-1 text-xs text-slate-500">
@@ -476,8 +537,28 @@ export function XmlComparison() {
           {/* Filter controls */}
           <div>
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
+              {/* Statistics badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-800">
+                Added: {stats.added}
+              </span>
+              <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-800">
+                Removed: {stats.removed}
+              </span>
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
+                Changed: {stats.changed}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700">
+                Showing: {filteredDiffs.length}
+              </span>
+            </div>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+               
+
+                {/* Change type filter buttons (added, removed, changed) */}
+                <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 mb-1">
+                 
+                  <button
                   type="button"
                   onClick={() =>
                     setChangeFilter({
@@ -496,8 +577,7 @@ export function XmlComparison() {
                   Added only
                 </button>
 
-                {/* Change type filter buttons (added, removed, changed) */}
-                <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 mb-1">
+
                   {(["added", "removed", "changed"] as const).map((k) => {
                     const on = changeFilter[k];
                     const colors =
@@ -537,46 +617,14 @@ export function XmlComparison() {
                       </button>
                     );
                   })}
-                </div>
-
-                {/* Value view toggle (both values vs value only) */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setValueView((v) => (v === "both" ? "valueOnly" : "both"))
-                  }
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                    valueView === "valueOnly"
-                      ? "border-primary-300 bg-primary-100 text-primary-900"
-                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
-                  title="When enabled, hides irrelevant columns (e.g. Added-only shows only the added value)."
-                >
-                  {valueView === "valueOnly"
-                    ? "Value-only view"
-                    : "Both values"}
-                </button>
+                </div> 
               </div>
             </div>
 
-            {/* Statistics badges */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-800">
-                Added: {stats.added}
-              </span>
-              <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-800">
-                Removed: {stats.removed}
-              </span>
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
-                Changed: {stats.changed}
-              </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700">
-                Showing: {filteredDiffs.length}
-              </span>
-            </div>
+            
 
             {/* Quick filter buttons to exclude specific categories (FaultMgmt, NeighborList, NeighborListInUse) */}
-            <div className="flex gap-1 rounded-full border border-slate-200 bg-white p-1 mt-1">
+            <div className="flex gap-1 mt-1">
               {(
                 ["FaultMgmt", "NeighborList", "NeighborListInUse"] as Exclude<
                   QuickFilterKey,
@@ -596,7 +644,7 @@ export function XmlComparison() {
                       }
                       setExcludedQuickFilters(newExcluded);
                     }}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition border border-slate-200 ${
                       isExcluded
                         ? "bg-rose-100 text-rose-900"
                         : "text-slate-600 hover:bg-slate-50"
