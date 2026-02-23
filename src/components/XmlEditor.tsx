@@ -1,108 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { xml2js, js2xml } from "xml-js";
-
-type XmlNode = {
-  name: string;
-  text?: string;
-  attributes?: Record<string, string>;
-  elements?: XmlNode[];
-};
-
-type EditableNode = {
-  id: string;
-  path: string;
-  name: string;
-  value: string;
-  attributes: Record<string, string>;
-  isText: boolean;
-  children: EditableNode[];
-};
+import {
+  type EditableNode,
+  buildEditableTree,
+  buildXmlFromEditable,
+} from "../utils/xmlTree";
 
 type XmlEditorProps = {
   onNavigateToComparison?: () => void;
 };
-
-function buildEditableTree(
-  elements: any[] | undefined,
-  path: string = "",
-  parentPath: string = "",
-): EditableNode[] {
-  if (!elements) return [];
-
-  const result: EditableNode[] = [];
-  const siblingCounts: Record<string, number> = {};
-
-  elements.forEach((el) => {
-    if (el.type !== "element") return;
-
-    const name = el.name || "unnamed";
-    const count = (siblingCounts[name] || 0) + 1;
-    siblingCounts[name] = count;
-    const currentPath = path
-      ? `${path}.${name}[${count}]`
-      : `${name}[${count}]`;
-    const id = currentPath;
-    const fullParentPath = parentPath ? `${parentPath}.${name}` : name;
-
-    // Text content
-    const textNodes =
-      el.elements?.filter(
-        (n: any) => n.type === "text" || n.type === "cdata",
-      ) || [];
-    const textValue = textNodes
-      .map((n: any) => n.text || "")
-      .join("")
-      .trim();
-
-    // Attributes
-    const attributes = el.attributes || {};
-
-    // Children (non-text elements)
-    const childElements =
-      el.elements?.filter((n: any) => n.type === "element") || [];
-    const children = buildEditableTree(
-      childElements,
-      currentPath,
-      fullParentPath,
-    );
-
-    result.push({
-      id,
-      path: currentPath,
-      name,
-      value: textValue,
-      attributes,
-      isText: true,
-      children,
-    });
-  });
-
-  return result;
-}
-
-function buildXmlFromEditable(nodes: EditableNode[]): any[] {
-  return nodes.map((node) => {
-    const element: any = {
-      type: "element",
-      name: node.name,
-    };
-
-    if (Object.keys(node.attributes).length > 0) {
-      element.attributes = node.attributes;
-    }
-
-    element.elements = [];
-    if (node.value) {
-      element.elements.push({ type: "text", text: node.value });
-    }
-
-    if (node.children.length > 0) {
-      element.elements.push(...buildXmlFromEditable(node.children));
-    }
-
-    return element;
-  });
-}
 
 function deepCloneNode(node: EditableNode): EditableNode {
   return {

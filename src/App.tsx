@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { XmlComparison } from "./components/XmlComparison";
 import XmlEditor from "./components/XmlEditor";
+import BulkXmlEditor from "./components/BulkXmlEditor";
 
-type ViewMode = "comparison" | "editor";
+type ViewMode = "comparison" | "editor" | "bulk";
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewMode>("comparison");
@@ -61,13 +62,21 @@ function App() {
           >
             XML Editor
           </button>
+          <button
+            onClick={() => setCurrentView("bulk")}
+            className={`px-4 py-2 text-sm font-semibold transition ${
+              currentView === "bulk"
+                ? "border-b-2 border-primary text-primary"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Bulk XML Editor
+          </button>
         </div>
 
-        {currentView === "comparison" ? (
-          <XmlComparison />
-        ) : (
-          <XmlEditor />
-        )}
+        {currentView === "comparison" && <XmlComparison />}
+        {currentView === "editor" && <XmlEditor />}
+        {currentView === "bulk" && <BulkXmlEditor />}
 
         <footer className="mt-8 border-t border-slate-200 pt-6 pb-4 text-center text-xs text-slate-500">
           <p className="mb-2">
