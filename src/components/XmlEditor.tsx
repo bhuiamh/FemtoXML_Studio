@@ -74,6 +74,13 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [tree, setTree] = useState<EditableNode[]>([]);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<EditableNode[]>([]);
+  const [searchIndex, setSearchIndex] = useState(0);
+  const [searchMode, setSearchMode] = useState<"parameter" | "path" | "value">(
+    "parameter",
+  );
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Undo/Redo system
@@ -256,13 +263,16 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
     if (parentList === null) {
       // Root level node
       const duplicated = deepCloneNode(sourceNode);
-      // Extract base name (e.g., "i1" from "i1[1]")
-      const baseName = sourceNode.name.replace(/\[\d+\]$/, "");
-      // Find next number
-      const siblings = tree.filter((n) => n.name.startsWith(baseName));
+      // Extract base name and numeric suffix (e.g., "i" and 1 from "i1")
+      const nameMatch = sourceNode.name.match(/^(.*?)(\d+)?$/);
+      const baseName = nameMatch?.[1] ?? sourceNode.name;
+      const siblings = tree.filter((n) => {
+        const m = n.name.match(/^(.*?)(\d+)?$/);
+        return m?.[1] === baseName;
+      });
       const numbers = siblings.map((n) => {
-        const match = n.name.match(/\[(\d+)\]$/);
-        return match ? parseInt(match[1]) : 0;
+        const m = n.name.match(/^(.*?)(\d+)$/);
+        return m ? parseInt(m[2], 10) : 0;
       });
       const nextNum = Math.max(0, ...numbers) + 1;
       duplicated.name = `${baseName}${nextNum}`;
@@ -278,13 +288,15 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
         return nodes.map((node) => {
           if (node.id === parent.id) {
             const duplicated = deepCloneNode(sourceNode);
-            const baseName = sourceNode.name.replace(/\[\d+\]$/, "");
-            const siblings = node.children.filter((n) =>
-              n.name.startsWith(baseName),
-            );
+            const nameMatch = sourceNode.name.match(/^(.*?)(\d+)?$/);
+            const baseName = nameMatch?.[1] ?? sourceNode.name;
+            const siblings = node.children.filter((n) => {
+              const m = n.name.match(/^(.*?)(\d+)?$/);
+              return m?.[1] === baseName;
+            });
             const numbers = siblings.map((n) => {
-              const match = n.name.match(/\[(\d+)\]$/);
-              return match ? parseInt(match[1]) : 0;
+              const m = n.name.match(/^(.*?)(\d+)$/);
+              return m ? parseInt(m[2], 10) : 0;
             });
             const nextNum = Math.max(0, ...numbers) + 1;
             duplicated.name = `${baseName}${nextNum}`;
@@ -298,14 +310,14 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
       };
       const newTree = update(tree);
       const regenerated = regenerateIds(newTree);
-      setTree(regenerated);
-      saveToHistory(regenerated);
-    }
 
     // Expand the duplicated node
     const duplicatedNode = findNodeById(tree, id);
     if (duplicatedNode) {
       setExpandedPaths(new Set([...expandedPaths, duplicatedNode.id]));
+    }
+      setTree(regenerated);
+      saveToHistory(regenerated);
     }
   };
 
@@ -336,12 +348,101 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
     }
   };
 
+  const currentSearchMatchId =
+    searchResults.length > 0 && searchIndex >= 0 && searchIndex < searchResults.length
+      ? searchResults[searchIndex].id
+      : null;
+
+  const focusNode = (targetId: string) => {
+    const parents = findParentNodes(tree, targetId) ?? [];
+    const newExpanded = new Set(expandedPaths);
+    parents.forEach((p) => newExpanded.add(p.id));
+    newExpanded.add(targetId);
+    setExpandedPaths(newExpanded);
+  };
+
+  const runSearch = () => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      setSearchResults([]);
+      setSearchIndex(0);
+      setIsSearchModalOpen(false);
+      return;
+    }
+
+    const allNodes: EditableNode[] = [];
+    const collect = (nodes: EditableNode[]) => {
+      nodes.forEach((n) => {
+        allNodes.push(n);
+        if (n.children.length > 0) collect(n.children);
+      });
+    };
+    collect(tree);
+
+    const matches = allNodes.filter((n) => {
+      const name = n.name.toLowerCase();
+      const cleanPath = n.path.replace(/\[\d+\]/g, "").toLowerCase();
+      const value = n.value.toLowerCase();
+
+      if (searchMode === "parameter") {
+        return name.includes(query);
+      }
+
+      if (searchMode === "path") {
+        return cleanPath.includes(query);
+      }
+
+      if (searchMode === "value") {
+        return value.includes(query);
+      }
+
+      return false;
+    });
+
+    setSearchResults(matches);
+    setSearchIndex(0);
+    if (matches[0]) {
+      focusNode(matches[0].id);
+    }
+    if (matches.length > 0) {
+      setIsSearchModalOpen(true);
+    } else {
+      setIsSearchModalOpen(false);
+    }
+  };
+
+  const goToSearchResult = (direction: "prev" | "next") => {
+    if (searchResults.length === 0) return;
+    let nextIndex = searchIndex;
+    if (direction === "next") {
+      nextIndex = (searchIndex + 1) % searchResults.length;
+    } else {
+      nextIndex = (searchIndex - 1 + searchResults.length) % searchResults.length;
+    }
+    setSearchIndex(nextIndex);
+    const target = searchResults[nextIndex];
+    if (target) {
+      focusNode(target.id);
+    }
+  };
+
   const renderNode = (node: EditableNode, level: number = 0) => {
+    if (
+      node.name === "Notification" ||
+      node.name === "AccessList" ||
+      (node.value.trim() === "" && node.children.length === 0)
+    ) {
+      return null;
+    }
     const hasChildren = node.children.length > 0;
     const isExpanded = expandedPaths.has(node.id);
+    const isActiveMatch = currentSearchMatchId === node.id;
 
     return (
-      <div key={node.id} className="select-none">
+      <div
+        key={node.id}
+        className={`select-none ${isActiveMatch ? "bg-yellow-50" : ""}`}
+      >
         <div
           className="flex items-center gap-2 border-b border-slate-100 p-2 hover:bg-slate-50"
           style={{ paddingLeft: `${level * 20 + 8}px` }}
@@ -365,7 +466,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
               type="text"
               value={node.value}
               onChange={(e) => updateNodeValue(node.id, e.target.value)}
-              placeholder="(no text value)"
+              placeholder=""
               className="w-full rounded border border-slate-300 px-2 py-1 text-xs font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
             />
           </div>
@@ -475,6 +576,79 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
         </div>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              runSearch();
+            }
+          }}
+          placeholder="Search by parameter name, full path, or value"
+          className="min-w-[260px] flex-1 rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
+        />
+        <button
+          onClick={runSearch}
+          className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Search
+        </button>
+        <button
+          onClick={() => goToSearchResult("prev")}
+          disabled={searchResults.length === 0}
+          className="rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Prev
+        </button>
+        <button
+          onClick={() => goToSearchResult("next")}
+          disabled={searchResults.length === 0}
+          className="rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Next
+        </button>
+        <span className="ml-2 text-xs text-slate-500">
+          {searchResults.length > 0
+            ? `Match ${searchIndex + 1} of ${searchResults.length}`
+            : "Type a query and press Enter or Search"}
+        </span>
+        <div className="ml-4 flex items-center gap-3 text-xs text-slate-600">
+          <span className="font-medium">Search in:</span>
+          <label className="flex items-center gap-1">
+            <input
+              type="radio"
+              name="searchMode"
+              value="parameter"
+              checked={searchMode === "parameter"}
+              onChange={() => setSearchMode("parameter")}
+            />
+            <span>Parameter</span>
+          </label>
+          <label className="flex items-center gap-1">
+            <input
+              type="radio"
+              name="searchMode"
+              value="path"
+              checked={searchMode === "path"}
+              onChange={() => setSearchMode("path")}
+            />
+            <span>Full path</span>
+          </label>
+          <label className="flex items-center gap-1">
+            <input
+              type="radio"
+              name="searchMode"
+              value="value"
+              checked={searchMode === "value"}
+              onChange={() => setSearchMode("value")}
+            />
+            <span>Value</span>
+          </label>
+        </div>
+      </div>
+
       {isLoading && (
         <div className="mb-4 rounded-lg bg-[#2596be]/10 p-4 text-center text-sm text-[#2596be]">
           Loading XML file...
@@ -518,6 +692,83 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
           <div className="max-h-[600px] overflow-y-auto">
             {tree.map((node) => renderNode(node))}
+          </div>
+        </div>
+      )}
+
+      {isSearchModalOpen && searchResults.length > 0 && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/40">
+          <div className="max-h-[80vh] w-full max-w-4xl overflow-hidden rounded-lg bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-800">
+                  Search results ({searchResults.length})
+                </h2>
+                <p className="text-xs text-slate-500">
+                  You can edit values directly here. Click Go to focus in the tree.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsSearchModalOpen(false)}
+                className="rounded px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="sticky top-0 bg-slate-50">
+                  <tr>
+                    <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">
+                      Full path
+                    </th>
+                    <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">
+                      Parameter
+                    </th>
+                    <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">
+                      Value
+                    </th>
+                    <th className="border-b border-slate-200 px-3 py-2" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {searchResults.map((result) => {
+                    const node = findNodeById(tree, result.id);
+                    if (!node) return null;
+                    const cleanPath = node.path.replace(/\[\d+\]/g, "");
+                    return (
+                      <tr key={result.id} className="border-b border-slate-100">
+                        <td className="px-3 py-1.5 font-mono text-[11px] text-slate-800">
+                          {cleanPath}
+                        </td>
+                        <td className="px-3 py-1.5 text-slate-700">{node.name}</td>
+                        <td className="px-3 py-1.5">
+                          <input
+                            type="text"
+                            value={node.value}
+                            onChange={(e) =>
+                              updateNodeValue(node.id, e.target.value)
+                            }
+                            className="w-full rounded border border-slate-300 px-2 py-1 text-[11px] font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
+                          />
+                        </td>
+                        <td className="px-3 py-1.5 text-right">
+                          <button
+                            onClick={() => {
+                              focusNode(node.id);
+                              setIsSearchModalOpen(false);
+                            }}
+                            className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                          >
+                            Go to
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

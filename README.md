@@ -26,14 +26,25 @@ A robust, high-performance web application for comparing and editing large-scale
 - **Detailed Statistics**: Shows counts for Added, Removed, and Changed parameters
 
 ### XML Editor Module
-- **Tree-based Editing**: Hierarchical view of XML structure
-- **Edit Values**: Modify text content of any XML node
-- **Edit Attributes**: Add, modify, or remove node attributes
-- **Duplicate Path Feature**: Clone parent paths with all children (e.g., duplicate i1 to create i2 with same structure)
-- **Delete Nodes**: Remove unwanted XML elements
-- **Undo/Redo System**: Full history support with 50-state undo/redo capability
-- **Expand/Collapse**: Navigate large XML structures easily
-- **Download Edited XML**: Export your modifications
+- **Normal XML Editor**:
+  - **Tree-based Editing**: Hierarchical view of XML structure
+  - **Full Search**: Search across parameter name, full path, value, and attributes
+  - **Edit Values**: Modify text content of any XML node
+  - **Edit Attributes**: Add, modify, or remove node attributes
+  - **Duplicate Path Feature**: Clone parent paths with all children (e.g., duplicate i1 to create i2 with same structure)
+  - **Delete Nodes**: Remove unwanted XML elements
+  - **Undo/Redo System**: Full history support with 50-state undo/redo capability
+  - **Expand/Collapse**: Navigate large XML structures easily
+  - **Context-Aware View**: Hides internal helper sections like `Notification` and `AccessList` for a cleaner tree
+  - **Download Edited XML**: Export your modifications
+
+- **Bulk XML Editor**:
+  - **Excel-Driven Updates**: Apply changes to the XML using an Excel file
+  - **Two-Column Excel Format**: `Parameter path` and `Value`
+  - **Flexible Path Syntax**: Dots or slashes (`Root.Section.Param` or `Root/Section/Param`), optional indices (`Param[2]`)
+  - **Full Path Support**: Also accepts full internal paths like `root[1].section[1].param[2]`
+  - **Result Summary**: Shows which paths were updated and which were not found
+  - **Bulk Download**: Export the bulk-edited XML in a single click
 
 ## 📋 Prerequisites
 
@@ -103,29 +114,43 @@ npm run lint
    - Click "Export CSV" for Google Sheets compatible format
    - Click "Export Excel" for Excel file format
 
-### XML Editor
+### XML Editor (Normal & Bulk)
 
-1. **Load XML**:
-   - Click "Load XML File" or navigate from Comparison tab
-   - Select your XML file
+1. **Select Editor Mode**:
+   - Go to the **XML Editor** tab
+   - Use the **Normal XML Editor / Bulk XML Editor** toggle to choose the mode
 
-2. **Edit XML**:
+2. **Load XML**:
+   - Click "Load XML File" and select your XML file
+
+3. **Normal XML Editor**:
    - **Edit Values**: Click on any text input field and modify values
    - **Edit Attributes**: Modify attribute values in the blue attribute boxes
    - **Duplicate Path**: Click "Duplicate" button on any node to clone it with all children
    - **Delete**: Click "Delete" to remove a node
+   - **Search**: Use the search bar to find nodes by parameter name, full path, value, or attribute
 
-3. **Navigate**:
+4. **Navigate**:
    - Click expand/collapse arrows (▶/▼) to view children
    - Scroll through large XML structures
 
-4. **Undo/Redo**:
+5. **Undo/Redo**:
    - Click "↶ Undo" to revert last action
    - Click "↷ Redo" to reapply undone action
    - Supports up to 50 history states
 
-5. **Download**:
+6. **Download**:
    - Click "Download Edited XML" to save your changes
+
+7. **Bulk XML Editing**:
+   - Switch to **Bulk XML Editor** mode in the XML Editor tab
+   - Load the same XML file
+   - Load an Excel file with two columns:
+     - **Parameter path**: e.g. `Root.Section.Param`, `Root/Section/Param`, or `Root[1].Section[1].Param[2]`
+     - **Value**: New value to write into the XML
+   - Click **"Apply Excel to XML"** to apply all changes
+   - Review the result summary (Updated / Not found)
+   - Click **"Download Edited XML"** to save the bulk-edited XML
 
 ## 🎨 Color Scheme
 
