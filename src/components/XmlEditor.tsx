@@ -426,94 +426,6 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
     }
   };
 
-  // const renderNode = (node: EditableNode, level: number = 0) => {
-  //   if (
-  //     node.name === "Notification" ||
-  //     node.name === "AccessList" ||
-  //     (node.value.trim() === "" && node.children.length === 0)
-  //   ) {
-  //     return null;
-  //   }
-  //   const hasChildren = node.children.length > 0;
-  //   const isExpanded = expandedPaths.has(node.id);
-  //   const isActiveMatch = currentSearchMatchId === node.id;
-
-  //   return (
-  //     <div
-  //       key={node.id}
-  //       className={`select-none ${isActiveMatch ? "bg-yellow-50" : ""}`}
-  //     >
-  //       <div
-  //         className="flex items-center gap-2 border-b border-slate-100 p-2 hover:bg-slate-50"
-  //         style={{ paddingLeft: `${level * 20 + 8}px` }}
-  //       >
-  //         {hasChildren && (
-  //           <button
-  //             onClick={() => toggleExpand(node.id)}
-  //             className="flex h-5 w-5 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-600"
-  //           >
-  //             {isExpanded ? "▼" : "▶"}
-  //           </button>
-  //         )}
-  //         {!hasChildren && <div className="w-5" />}
-
-  //         <span className="font-mono text-sm font-semibold text-slate-700">
-  //           {node.name}
-  //         </span>
-
-  //         <div className="ml-2 flex-1">
-  //           <input
-  //             type="text"
-  //             value={node.value}
-  //             onChange={(e) => updateNodeValue(node.id, e.target.value)}
-  //             placeholder=""
-  //             className="w-full rounded border border-slate-300 px-2 py-1 text-xs font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
-  //           />
-  //         </div>
-
-  //         <div className="flex gap-1">
-  //           {Object.entries(node.attributes).map(([key, val]) => (
-  //             <div
-  //               key={key}
-  //               className="flex items-center gap-1 rounded bg-[#2596be]/10 px-2 py-0.5 text-xs"
-  //             >
-  //               <span className="font-semibold text-[#2596be]">{key}=</span>
-  //               <input
-  //                 type="text"
-  //                 value={val}
-  //                 onChange={(e) =>
-  //                   updateNodeAttribute(node.id, key, e.target.value)
-  //                 }
-  //                 className="w-20 rounded border border-[#2596be]/20 bg-white px-1 py-0.5 text-xs focus:border-[#2596be] focus:outline-none"
-  //               />
-  //             </div>
-  //           ))}
-  //         </div>
-
-  //         <button
-  //           onClick={() => duplicatePath(node.id)}
-  //           className="rounded px-2 py-1 text-xs text-[#2596be] hover:bg-[#2596be]/10"
-  //           title="Duplicate this path with all children"
-  //         >
-  //           Duplicate
-  //         </button>
-
-  //         <button
-  //           onClick={() => deleteNode(node.id)}
-  //           className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-  //         >
-  //           Delete
-  //         </button>
-  //       </div>
-
-  //       {hasChildren && isExpanded && (
-  //         <div>
-  //           {node.children.map((child) => renderNode(child, level + 1))}
-  //         </div>
-  //       )}
-  //     </div>
-  //   );
-  // };
 
   const renderNode = (node: EditableNode, level: number = 0) => {
     // Skip rendering completely empty leaf nodes
@@ -854,7 +766,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
                             onChange={(e) =>
                               updateNodeValue(node.id, e.target.value)
                             }
-                            className="w-full rounded border border-slate-300 px-2 py-1 text-[11px] font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
+                            className="min-w-full rounded border border-slate-300 px-2 py-1 text-[11px] font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
                           />
                         </td>
                         <td className="px-3 py-1.5 text-right">
@@ -863,7 +775,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
                               focusNode(node.id);
                               setIsSearchModalOpen(false);
                             }}
-                            className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                            className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50 w-12"
                           >
                             Go to
                           </button>
