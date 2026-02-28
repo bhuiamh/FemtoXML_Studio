@@ -78,7 +78,7 @@ function App() {
                     : "rounded-md text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                Normal XML Editor
+                Basic
               </button>
               <button
                 onClick={() => setEditorMode("bulk")}
@@ -88,7 +88,7 @@ function App() {
                     : "rounded-md text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                Bulk XML Editor
+                Bulk
               </button>
             </div>
             {editorMode === "normal" ? <XmlEditor /> : <BulkXmlEditor />}

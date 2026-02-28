@@ -426,86 +426,190 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
     }
   };
 
+  // const renderNode = (node: EditableNode, level: number = 0) => {
+  //   if (
+  //     node.name === "Notification" ||
+  //     node.name === "AccessList" ||
+  //     (node.value.trim() === "" && node.children.length === 0)
+  //   ) {
+  //     return null;
+  //   }
+  //   const hasChildren = node.children.length > 0;
+  //   const isExpanded = expandedPaths.has(node.id);
+  //   const isActiveMatch = currentSearchMatchId === node.id;
+
+  //   return (
+  //     <div
+  //       key={node.id}
+  //       className={`select-none ${isActiveMatch ? "bg-yellow-50" : ""}`}
+  //     >
+  //       <div
+  //         className="flex items-center gap-2 border-b border-slate-100 p-2 hover:bg-slate-50"
+  //         style={{ paddingLeft: `${level * 20 + 8}px` }}
+  //       >
+  //         {hasChildren && (
+  //           <button
+  //             onClick={() => toggleExpand(node.id)}
+  //             className="flex h-5 w-5 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+  //           >
+  //             {isExpanded ? "▼" : "▶"}
+  //           </button>
+  //         )}
+  //         {!hasChildren && <div className="w-5" />}
+
+  //         <span className="font-mono text-sm font-semibold text-slate-700">
+  //           {node.name}
+  //         </span>
+
+  //         <div className="ml-2 flex-1">
+  //           <input
+  //             type="text"
+  //             value={node.value}
+  //             onChange={(e) => updateNodeValue(node.id, e.target.value)}
+  //             placeholder=""
+  //             className="w-full rounded border border-slate-300 px-2 py-1 text-xs font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
+  //           />
+  //         </div>
+
+  //         <div className="flex gap-1">
+  //           {Object.entries(node.attributes).map(([key, val]) => (
+  //             <div
+  //               key={key}
+  //               className="flex items-center gap-1 rounded bg-[#2596be]/10 px-2 py-0.5 text-xs"
+  //             >
+  //               <span className="font-semibold text-[#2596be]">{key}=</span>
+  //               <input
+  //                 type="text"
+  //                 value={val}
+  //                 onChange={(e) =>
+  //                   updateNodeAttribute(node.id, key, e.target.value)
+  //                 }
+  //                 className="w-20 rounded border border-[#2596be]/20 bg-white px-1 py-0.5 text-xs focus:border-[#2596be] focus:outline-none"
+  //               />
+  //             </div>
+  //           ))}
+  //         </div>
+
+  //         <button
+  //           onClick={() => duplicatePath(node.id)}
+  //           className="rounded px-2 py-1 text-xs text-[#2596be] hover:bg-[#2596be]/10"
+  //           title="Duplicate this path with all children"
+  //         >
+  //           Duplicate
+  //         </button>
+
+  //         <button
+  //           onClick={() => deleteNode(node.id)}
+  //           className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+  //         >
+  //           Delete
+  //         </button>
+  //       </div>
+
+  //       {hasChildren && isExpanded && (
+  //         <div>
+  //           {node.children.map((child) => renderNode(child, level + 1))}
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  // };
+
   const renderNode = (node: EditableNode, level: number = 0) => {
-    if (
-      node.name === "Notification" ||
-      node.name === "AccessList" ||
-      (node.value.trim() === "" && node.children.length === 0)
-    ) {
+    // Skip rendering completely empty leaf nodes
+    // (we no longer check node.name === "Notification" || "AccessList" here)
+    if (node.value.trim() === "" && node.children.length === 0) {
       return null;
     }
+  
     const hasChildren = node.children.length > 0;
     const isExpanded = expandedPaths.has(node.id);
     const isActiveMatch = currentSearchMatchId === node.id;
-
+  
+    // Filter out unwanted attributes (Notification and AccessList)
+    const visibleAttributes = Object.entries(node.attributes).filter(
+      ([key]) => key !== "Notification" && key !== "AccessList"
+    );
+  
     return (
       <div
         key={node.id}
         className={`select-none ${isActiveMatch ? "bg-yellow-50" : ""}`}
       >
         <div
-          className="flex items-center gap-2 border-b border-slate-100 p-2 hover:bg-slate-50"
+          className="flex items-center gap-2 border-b border-slate-100 p-2 hover:bg-slate-50 transition-colors"
           style={{ paddingLeft: `${level * 20 + 8}px` }}
         >
-          {hasChildren && (
+          {/* Expander icon or spacer */}
+          {hasChildren ? (
             <button
               onClick={() => toggleExpand(node.id)}
-              className="flex h-5 w-5 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+              className="flex h-5 w-5 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-600 focus:outline-none"
             >
               {isExpanded ? "▼" : "▶"}
             </button>
+          ) : (
+            <div className="w-5" />
           )}
-          {!hasChildren && <div className="w-5" />}
-
-          <span className="font-mono text-sm font-semibold text-slate-700">
+  
+          {/* Node name */}
+          <span className="font-mono text-sm font-semibold text-slate-700 min-w-[100px]">
             {node.name}
           </span>
-
-          <div className="ml-2 flex-1">
+  
+          {/* Value input */}
+          <div className="ml-2 flex-1 min-w-0">
             <input
               type="text"
               value={node.value}
               onChange={(e) => updateNodeValue(node.id, e.target.value)}
-              placeholder=""
-              className="w-full rounded border border-slate-300 px-2 py-1 text-xs font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
+              placeholder="..."
+              spellCheck={false}
+              className="w-full rounded border border-slate-300 px-2 py-1 text-xs font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]/50"
             />
           </div>
-
-          <div className="flex gap-1">
-            {Object.entries(node.attributes).map(([key, val]) => (
-              <div
-                key={key}
-                className="flex items-center gap-1 rounded bg-[#2596be]/10 px-2 py-0.5 text-xs"
-              >
-                <span className="font-semibold text-[#2596be]">{key}=</span>
-                <input
-                  type="text"
-                  value={val}
-                  onChange={(e) =>
-                    updateNodeAttribute(node.id, key, e.target.value)
-                  }
-                  className="w-20 rounded border border-[#2596be]/20 bg-white px-1 py-0.5 text-xs focus:border-[#2596be] focus:outline-none"
-                />
-              </div>
-            ))}
+  
+          {/* Visible attributes only */}
+          {visibleAttributes.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {visibleAttributes.map(([key, val]) => (
+                <div
+                  key={key}
+                  className="flex items-center gap-1 rounded bg-[#2596be]/10 px-2 py-0.5 text-xs whitespace-nowrap"
+                >
+                  <span className="font-semibold text-[#2596be]">{key}=</span>
+                  <input
+                    type="text"
+                    value={val}
+                    onChange={(e) => updateNodeAttribute(node.id, key, e.target.value)}
+                    spellCheck={false}
+                    className="w-20 rounded border border-[#2596be]/20 bg-white px-1.5 py-0.5 text-xs focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]/40"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+  
+          {/* Actions */}
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={() => duplicatePath(node.id)}
+              className="rounded px-2 py-1 text-xs text-[#2596be] hover:bg-[#2596be]/10 transition-colors"
+              title="Duplicate this path with all children"
+            >
+              Duplicate
+            </button>
+  
+            <button
+              onClick={() => deleteNode(node.id)}
+              className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Delete
+            </button>
           </div>
-
-          <button
-            onClick={() => duplicatePath(node.id)}
-            className="rounded px-2 py-1 text-xs text-[#2596be] hover:bg-[#2596be]/10"
-            title="Duplicate this path with all children"
-          >
-            Duplicate
-          </button>
-
-          <button
-            onClick={() => deleteNode(node.id)}
-            className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-          >
-            Delete
-          </button>
         </div>
-
+  
+        {/* Children */}
         {hasChildren && isExpanded && (
           <div>
             {node.children.map((child) => renderNode(child, level + 1))}
@@ -515,6 +619,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
     );
   };
 
+  
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
@@ -698,7 +803,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
 
       {isSearchModalOpen && searchResults.length > 0 && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/40">
-          <div className="max-h-[80vh] w-full max-w-4xl overflow-hidden rounded-lg bg-white shadow-xl">
+          <div className="max-h-[80vh] w-full max-w-4xl overfl rounded-lg bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
               <div>
                 <h2 className="text-sm font-semibold text-slate-800">
