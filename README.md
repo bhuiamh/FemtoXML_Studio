@@ -56,6 +56,19 @@ A robust, high-performance web application for comparing and editing large-scale
 - **On-Screen Preview**: Per-device band summary, expanding into the full neighbour table before you export
 - **Drag & Drop**: Drop XML files anywhere on the panel; re-dropping the same file replaces it instead of duplicating the sheet
 
+### Dynamic Path Excel Module
+- **Any Path, Any Table**: Type a TR-069 parameter path — e.g. `Device.Services.FAPService.{n}.CellConfig.LTE.RAN.NeighborListInUse.LTECell` — and get the same styled workbook, one sheet per device
+- **Path to End of Subtree**: The node you point at becomes the first table, and **every nested table below it becomes its own table** on the same sheet, named by its path relative to the query (`Mobility.ConnMode.EUTRA.A3MeasureCtrl`). Aim at `…CellConfig.LTE.RAN` and you get the RAN parameters plus all 19 tables under it in one export
+- **Instance Wildcards**: `{n}` (also `{i}`, `*`, `i*`) matches every indexed instance, `i2` / `2` picks one; `.` and `/` both separate segments and a leading `Device` is optional
+- **Columns from the Data**: Every leaf parameter under a row becomes a column in first-seen order, plain parameter groups flattened with dotted names (`Common.CellIdentity`) — no configuration needed
+- **Tables and Groups**: A container of `i1, i2, …` entries gives one row per entry; a plain element (e.g. `…RAN.RF`) gives one row per match, so dual-band devices come out as two rows
+- **Instance Column**: Each row is labelled with where it came from, e.g. `FAPService.1 / LTECell.3`
+- **Optional CID Split**: In any table with a `CID` column, `eNodeB ID` and `Cell ID` formulas are inserted right after it (toggle in the header)
+- **Subtree Toggle**: Turn *Include child tables* off to export only the node itself; anything left out is listed on the sheet
+- **Table Index**: When a query yields more than one table, the Overview sheet lists every table with its row and column counts
+- **Safe on Broad Paths**: Caps at 2000 columns and 5000 rows per table, 60 tables and 500k cells per device, and reports anything it had to drop
+- **Presets**: One-click paths for the in-use and configured neighbour lists, RF parameters, the Mobility subtree, EPC PLMN list and alarm history
+
 ## 📋 Prerequisites
 
 - Node.js 18.0.0 or higher
@@ -187,6 +200,26 @@ Notes:
 - Duplicate site IDs are kept apart by suffixing the sheet name (`DHTE1F`, `DHTE1F (2)`)
 - Rows with a non-numeric CID are written without the eNodeB ID / Cell ID formulas, so no `#VALUE!` errors appear
 
+### Dynamic Path Excel
+
+1. **Open the Module**:
+   - Go to the **Dynamic Excel** tab
+
+2. **Set the Path**:
+   - Type a parameter path and press Enter (or click **Scan path**), or click one of the example chips
+   - Use `{n}` where the model has indexed instances: `Device.Services.FAPService.{n}.CellConfig.LTE.RAN.RF`
+   - Tag names are matched case-sensitively first, then case-insensitively, so lower-case paths also resolve
+
+3. **Load Device XMLs**:
+   - Click **"Load device XML files"** or drop them on the panel — the current path is applied to every file immediately, and changing the path (or either toggle) re-scans everything already loaded
+
+4. **Review and Export**:
+   - Each device card lists every table found, the queried node first and nested tables below it as `↳ relative.path`, with their row × column counts; **Preview** opens any of them
+   - Amber banners report anything dropped by the caps, or the tables skipped when *Include child tables* is off
+   - Set the output file name (suggested from the path leaf, e.g. `LTECell_Table.xlsx`) and click **"Download Excel"**
+
+Sheet layout: title, serial/source subtitle, then one blue bar per table followed by its own header and rows. Every table is `No.` · `Instance` · its discovered columns — with `eNodeB ID` and `Cell ID` after `CID` where the table has one and the toggle is on.
+
 ## 🎨 Color Scheme
 
 The application uses a professional color palette:
@@ -203,7 +236,7 @@ The application uses a professional color palette:
 - **xml-js**: XML parsing and generation
 - **@tanstack/react-virtual**: Virtual scrolling for performance
 - **xlsx**: Excel file reading (bulk editor) and comparison-report export
-- **exceljs**: Styled Excel workbook generation for the Neighbour Excel module (loaded on demand, so it stays out of the initial bundle)
+- **exceljs**: Styled Excel workbook generation for the Neighbour and Dynamic Path modules (loaded on demand, so it stays out of the initial bundle)
 - **Web Workers**: Background processing for XML comparison
 
 ### Performance Optimizations
@@ -218,11 +251,15 @@ xml-comparison/
 ├── src/
 │   ├── components/
 │   │   ├── XmlEditor.tsx      # XML Editor component
-│   │   └── NeighborListExcel.tsx  # Neighbour Excel module
+│   │   ├── NeighborListExcel.tsx  # Neighbour Excel module
+│   │   └── DynamicPathExcel.tsx   # Dynamic Path Excel module
 │   ├── utils/
 │   │   ├── export.ts          # CSV/Excel export utilities
+│   │   ├── excelCommon.ts     # Shared workbook styling helpers
 │   │   ├── neighborList.ts    # Neighbour List In Use extraction from device XML
-│   │   └── neighborExcel.ts   # Styled neighbour workbook builder
+│   │   ├── neighborExcel.ts   # Styled neighbour workbook builder
+│   │   ├── pathTable.ts       # Generic TR-069 path to table resolution
+│   │   └── pathTableExcel.ts  # Styled workbook builder for dynamic paths
 │   ├── workers/
 │   │   └── xmlDiffWorker.ts   # Web Worker for XML comparison
 │   ├── App.tsx                # Main application component
