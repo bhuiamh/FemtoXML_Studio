@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { XmlComparison } from "./components/XmlComparison";
 import XmlEditor from "./components/XmlEditor";
 import BulkXmlEditor from "./components/BulkXmlEditor";
+import NeighborListExcel from "./components/NeighborListExcel";
 
-type ViewMode = "comparison" | "editor";
+type ViewMode = "comparison" | "editor" | "neighbour";
 type EditorMode = "normal" | "bulk";
 
 function App() {
@@ -64,9 +65,20 @@ function App() {
           >
             XML Editor
           </button>
+          <button
+            onClick={() => setCurrentView("neighbour")}
+            className={`px-4 py-2 text-sm font-semibold transition ${
+              currentView === "neighbour"
+                ? "border-b-2 border-primary text-primary"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Neighbour Excel
+          </button>
         </div>
 
         {currentView === "comparison" && <XmlComparison />}
+        {currentView === "neighbour" && <NeighborListExcel />}
         {currentView === "editor" && (
           <div className="flex flex-col gap-4">
             <div className="flex gap-2 border-b border-slate-200 pb-2">

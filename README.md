@@ -46,6 +46,16 @@ A robust, high-performance web application for comparing and editing large-scale
   - **Result Summary**: Shows which paths were updated and which were not found
   - **Bulk Download**: Export the bulk-edited XML in a single click
 
+### Neighbour Excel Module
+- **One Sheet per Device**: Each XML export is one eNodeB device, so it gets one sheet — plus an **Overview** sheet with one row per device
+- **Neighbour List In Use**: Reads the LTE table at `Device.Services.FAPService.{n}.CellConfig.LTE.RAN.NeighborListInUse.LTECell` (only the LTE subtree — inter-RAT LTE neighbours under UMTS are not mixed in)
+- **Single & Dual Band, One Table**: Whether the device carries one band/cell or two, all of its neighbours land in a single table, each row tagged with the **Serving Band** it is listed under; the serving EARFCN and PhyCellID of every cell are shown in info bars above the table
+- **Calculated Columns**: `eNodeB ID` and `Cell ID` sit directly after `CID` and are written as live Excel formulas — `MOD(CID,256)` and `(CID - Cell ID)/256` — with cached values so they read correctly even in viewers that don't recalculate
+- **Site Metadata from File Name**: `<serial>_<siteId>_<date>_<rest>.xml` fills the sheet title, site ID and serial number
+- **Branded Output**: Merged title bars, blue headers, borders and frozen header rows, sized for printing
+- **On-Screen Preview**: Per-device band summary, expanding into the full neighbour table before you export
+- **Drag & Drop**: Drop XML files anywhere on the panel; re-dropping the same file replaces it instead of duplicating the sheet
+
 ## 📋 Prerequisites
 
 - Node.js 18.0.0 or higher
@@ -152,6 +162,31 @@ npm run lint
    - Review the result summary (Updated / Not found)
    - Click **"Download Edited XML"** to save the bulk-edited XML
 
+### Neighbour Excel
+
+1. **Open the Module**:
+   - Go to the **Neighbour Excel** tab
+
+2. **Load Device XMLs**:
+   - Click **"Load device XML files"** (multi-select is supported) or drag and drop the files onto the panel
+   - Name files as `<serial>_<siteId>_<date>_<rest>.xml` (e.g. `00103000340_DHTE1F_20260820_Manual.xml`) so each sheet picks up its site ID and serial number automatically; other names fall back to the file name as the site ID
+
+3. **Review What Was Found**:
+   - Each device card lists the cells/bands it carries with serving EARFCN, serving PCI and neighbour count
+   - Click **Preview** to inspect the device's full neighbour table, including the calculated eNodeB ID and Cell ID
+   - Click **Remove** to drop a device, or **Clear all** to start over
+
+4. **Export**:
+   - Optionally change the output file name
+   - Click **"Download Excel"** to save the workbook — an **Overview** sheet with one row per device, then one sheet per device holding its complete neighbour list
+
+Column order in each sheet: `No.` · `Serving Band` · `PLMNID` · `CID` · `eNodeB ID` · `Cell ID` · then the remaining neighbour parameters (`EARFCN`, `PhyCellID`, `QOffset`, `CIO`, …).
+
+Notes:
+- Devices whose LTE neighbour list is empty still get a sheet, with an explanatory line instead of a table
+- Duplicate site IDs are kept apart by suffixing the sheet name (`DHTE1F`, `DHTE1F (2)`)
+- Rows with a non-numeric CID are written without the eNodeB ID / Cell ID formulas, so no `#VALUE!` errors appear
+
 ## 🎨 Color Scheme
 
 The application uses a professional color palette:
@@ -167,7 +202,8 @@ The application uses a professional color palette:
 - **Tailwind CSS**: Utility-first CSS framework
 - **xml-js**: XML parsing and generation
 - **@tanstack/react-virtual**: Virtual scrolling for performance
-- **xlsx**: Excel file generation
+- **xlsx**: Excel file reading (bulk editor) and comparison-report export
+- **exceljs**: Styled Excel workbook generation for the Neighbour Excel module (loaded on demand, so it stays out of the initial bundle)
 - **Web Workers**: Background processing for XML comparison
 
 ### Performance Optimizations
@@ -181,9 +217,12 @@ The application uses a professional color palette:
 xml-comparison/
 ├── src/
 │   ├── components/
-│   │   └── XmlEditor.tsx      # XML Editor component
+│   │   ├── XmlEditor.tsx      # XML Editor component
+│   │   └── NeighborListExcel.tsx  # Neighbour Excel module
 │   ├── utils/
-│   │   └── export.ts          # CSV/Excel export utilities
+│   │   ├── export.ts          # CSV/Excel export utilities
+│   │   ├── neighborList.ts    # Neighbour List In Use extraction from device XML
+│   │   └── neighborExcel.ts   # Styled neighbour workbook builder
 │   ├── workers/
 │   │   └── xmlDiffWorker.ts   # Web Worker for XML comparison
 │   ├── App.tsx                # Main application component
