@@ -4,8 +4,9 @@ import XmlEditor from "./components/XmlEditor";
 import BulkXmlEditor from "./components/BulkXmlEditor";
 import NeighborListExcel from "./components/NeighborListExcel";
 import DynamicPathExcel from "./components/DynamicPathExcel";
+import SiteConfigMatrix from "./components/SiteConfigMatrix";
 
-type ViewMode = "comparison" | "editor" | "neighbour" | "dynamic";
+type ViewMode = "comparison" | "editor" | "neighbour" | "dynamic" | "matrix";
 type EditorMode = "normal" | "bulk";
 
 function App() {
@@ -86,11 +87,22 @@ function App() {
           >
             Dynamic Excel
           </button>
+          <button
+            onClick={() => setCurrentView("matrix")}
+            className={`px-4 py-2 text-sm font-semibold transition ${
+              currentView === "matrix"
+                ? "border-b-2 border-primary text-primary"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Site Compare
+          </button>
         </div>
 
         {currentView === "comparison" && <XmlComparison />}
         {currentView === "neighbour" && <NeighborListExcel />}
         {currentView === "dynamic" && <DynamicPathExcel />}
+        {currentView === "matrix" && <SiteConfigMatrix />}
         {currentView === "editor" && (
           <div className="flex flex-col gap-4">
             <div className="flex gap-2 border-b border-slate-200 pb-2">

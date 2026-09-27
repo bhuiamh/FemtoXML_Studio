@@ -69,6 +69,15 @@ A robust, high-performance web application for comparing and editing large-scale
 - **Safe on Broad Paths**: Caps at 2000 columns and 5000 rows per table, 60 tables and 500k cells per device, and reports anything it had to drop
 - **Presets**: One-click paths for the in-use and configured neighbour lists, RF parameters, the Mobility subtree, EPC PLMN list and alarm history
 
+### Site Configuration Matrix Module
+- **Side-by-side site comparison**: load any number of site XML exports and get one row per parameter, one column per site — a mismatch is visible by reading across the row
+- **Status column**: every row is marked `Match`, `Mismatch` (sites disagree) or `Missing` (the parameter is absent on some sites), with the number of distinct values and how many sites carry it
+- **Volatile data hidden by default**: alarms and fault management, statistics and counters, timestamps and uptime, device identity (serial, MAC, GPS) and live radio measurements are excluded, so real configuration differences are not buried — one checkbox brings them back, and the UI lists exactly what is hidden
+- **Mismatches only**: a toggle that shrinks the export to just the rows that differ
+- **CSV and Excel**: plain CSV (UTF-8 BOM, formula-injection safe) plus an `.xlsx` where mismatching rows are highlighted rose and missing rows amber via conditional formatting, with auto-filter and frozen parameter columns
+- **Snapshot comparison**: loading the same site from different dates is supported — the column label picks up the date from the file name
+- **Scales to real exports**: ~25,000 parameters per device, virtualised preview with live search over path and value
+
 ## 📋 Prerequisites
 
 - Node.js 18.0.0 or higher
@@ -220,6 +229,26 @@ Notes:
 
 Sheet layout: title, serial/source subtitle, then one blue bar per table followed by its own header and rows. Every table is `No.` · `Instance` · its discovered columns — with `eNodeB ID` and `Cell ID` after `CID` where the table has one and the toggle is on.
 
+### Site Configuration Matrix
+
+1. **Open the Module**:
+   - Go to the **Site Compare** tab
+
+2. **Load the sites**:
+   - Click **"Load site XML files"** (multi-select) or drop the files on the panel — each file becomes one column, named from the site ID in the file name
+   - Re-dropping the same file replaces its column instead of adding a second one
+
+3. **Tune what you are looking at**:
+   - **Hide volatile data** (on by default) removes alarms, counters, timestamps and device identity; click the counter next to it to see exactly which groups are excluded
+   - **Mismatches only** narrows both the preview and the export to rows that differ or are missing somewhere
+   - The search box filters the preview by parameter path or value; it does not change what gets exported
+
+4. **Export**:
+   - **Download CSV** for a plain file, **Download Excel** for the highlighted workbook
+   - The Excel file has a `Summary` sheet (sites, parameter counts, match/mismatch/missing totals) and a `Configuration` sheet with the matrix
+
+Columns: `Parameter Path` · `Parameter` · one column per site · `Status` · `Distinct` · `Sites With Value`.
+
 ## 🎨 Color Scheme
 
 The application uses a professional color palette:
@@ -252,14 +281,17 @@ xml-comparison/
 │   ├── components/
 │   │   ├── XmlEditor.tsx      # XML Editor component
 │   │   ├── NeighborListExcel.tsx  # Neighbour Excel module
-│   │   └── DynamicPathExcel.tsx   # Dynamic Path Excel module
+│   │   ├── DynamicPathExcel.tsx   # Dynamic Path Excel module
+│   │   └── SiteConfigMatrix.tsx   # Site Configuration Matrix module
 │   ├── utils/
 │   │   ├── export.ts          # CSV/Excel export utilities
 │   │   ├── excelCommon.ts     # Shared workbook styling helpers
 │   │   ├── neighborList.ts    # Neighbour List In Use extraction from device XML
 │   │   ├── neighborExcel.ts   # Styled neighbour workbook builder
 │   │   ├── pathTable.ts       # Generic TR-069 path to table resolution
-│   │   └── pathTableExcel.ts  # Styled workbook builder for dynamic paths
+│   │   ├── pathTableExcel.ts  # Styled workbook builder for dynamic paths
+│   │   ├── siteMatrix.ts      # Site-by-site parameter matrix + volatile filters
+│   │   └── siteMatrixExport.ts # CSV and highlighted workbook exporters
 │   ├── workers/
 │   │   └── xmlDiffWorker.ts   # Web Worker for XML comparison
 │   ├── App.tsx                # Main application component
