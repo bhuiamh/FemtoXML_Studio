@@ -2,9 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Theme tokens as space-separated RGB triplets so Tailwind can apply opacity
+  to them. Light lives on the bare :root, so the default (unset) state always
+  resolves; dark is declared twice — once for a dark OS, once for the explicit
+  toggle — so neither can strand the other.
+*/
 @layer base {
   :root {
     color-scheme: light;
+
+    --ground: 238 243 248;
+    --ground-tint: 220 231 241;
+    --surface: 255 255 255;
+    --surface-sunk: 244 248 252;
+    --surface-raised: 255 255 255;
+
+    --rail: 13 35 56;
+    --rail-ink: 207 224 239;
+    --rail-dim: 125 155 181;
+
+    --line: 216 227 238;
+    --line-soft: 232 239 246;
+
+    --ink: 14 27 42;
+    --ink-2: 61 83 104;
+    --ink-3: 107 130 153;
+
+    --accent: 37 150 190;
+    --accent-deep: 20 100 138;
+    --accent-soft: 226 241 248;
+    --accent-ink: 15 92 125;
+
+    --ok: 23 145 106;
+    --ok-soft: 224 243 236;
+    --warn: 183 121 31;
+    --warn-soft: 251 240 217;
+    --bad: 200 64 90;
+    --bad-soft: 251 230 234;
+
+    --shadow-rgb: 14 27 42;
+    --dot: 37 150 190;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      color-scheme: dark;
+
+      --ground: 8 15 24;
+      --ground-tint: 12 25 40;
+      --surface: 17 30 45;
+      --surface-sunk: 12 24 38;
+      --surface-raised: 22 38 55;
+
+      --rail: 10 22 36;
+      --rail-ink: 195 214 230;
+      --rail-dim: 109 133 153;
+
+      --line: 34 52 74;
+      --line-soft: 26 42 60;
+
+      --ink: 230 238 246;
+      --ink-2: 168 188 205;
+      --ink-3: 122 144 164;
+
+      --accent: 56 169 209;
+      --accent-deep: 111 198 228;
+      --accent-soft: 16 48 63;
+      --accent-ink: 127 205 232;
+
+      --ok: 60 189 146;
+      --ok-soft: 15 44 36;
+      --warn: 217 163 67;
+      --warn-soft: 46 36 19;
+      --bad: 228 105 127;
+      --bad-soft: 49 22 29;
+
+      --shadow-rgb: 0 0 0;
+      --dot: 56 169 209;
+    }
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --ground: 8 15 24;
+    --ground-tint: 12 25 40;
+    --surface: 17 30 45;
+    --surface-sunk: 12 24 38;
+    --surface-raised: 22 38 55;
+
+    --rail: 10 22 36;
+    --rail-ink: 195 214 230;
+    --rail-dim: 109 133 153;
+
+    --line: 34 52 74;
+    --line-soft: 26 42 60;
+
+    --ink: 230 238 246;
+    --ink-2: 168 188 205;
+    --ink-3: 122 144 164;
+
+    --accent: 56 169 209;
+    --accent-deep: 111 198 228;
+    --accent-soft: 16 48 63;
+    --accent-ink: 127 205 232;
+
+    --ok: 60 189 146;
+    --ok-soft: 15 44 36;
+    --warn: 217 163 67;
+    --warn-soft: 46 36 19;
+    --bad: 228 105 127;
+    --bad-soft: 49 22 29;
+
+    --shadow-rgb: 0 0 0;
+    --dot: 56 169 209;
   }
 
   html,
@@ -15,8 +127,69 @@
 
   body {
     margin: 0;
-    @apply bg-slate-50 text-slate-900;
-    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    @apply bg-ground font-sans text-sm text-ink antialiased;
+    /* Very light ground with one soft glow — enough atmosphere to read as a
+       technology product, quiet enough to sit behind 25,000-row tables. */
+    background-image: radial-gradient(
+      1100px 520px at 72% -10%,
+      rgb(var(--ground-tint)),
+      transparent 70%
+    );
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply tracking-tight;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent/60 ring-offset-1 ring-offset-surface;
+  }
+
+  ::selection {
+    @apply bg-accent/25 text-ink;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--ink-3) / 0.35) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full border-2 border-solid border-transparent bg-clip-content;
+    background-color: rgb(var(--ink-3) / 0.32);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--ink-3) / 0.55);
   }
 }
 
+@layer components {
+  /* Faint dot field used on the rail and on empty states. */
+  .dot-field {
+    background-image: radial-gradient(rgb(var(--dot) / 0.16) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

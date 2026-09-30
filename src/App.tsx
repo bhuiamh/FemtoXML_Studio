@@ -5,11 +5,15 @@ import BulkXmlEditor from "./components/BulkXmlEditor";
 import NeighborListExcel from "./components/NeighborListExcel";
 import DynamicPathExcel from "./components/DynamicPathExcel";
 import SiteConfigMatrix from "./components/SiteConfigMatrix";
+import LoginScreen from "./components/LoginScreen";
+import { AppShell, type ViewMode } from "./components/AppShell";
+import { SegmentedControl } from "./components/ui";
+import { endSession, hasSession } from "./auth";
 
-type ViewMode = "comparison" | "editor" | "neighbour" | "dynamic" | "matrix";
 type EditorMode = "normal" | "bulk";
 
 function App() {
+  const [signedIn, setSignedIn] = useState(hasSession);
   const [currentView, setCurrentView] = useState<ViewMode>("comparison");
   const [editorMode, setEditorMode] = useState<EditorMode>("normal");
 
@@ -42,117 +46,40 @@ function App() {
     );
   }, []);
 
-  // Render main layout and show editor or comparison content inside it
+  if (!signedIn) {
+    return <LoginScreen onSignedIn={() => setSignedIn(true)} />;
+  }
+
+  const signOut = () => {
+    endSession();
+    setSignedIn(false);
+  };
+
   return (
-    <div className="min-h-full bg-slate-50">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-6">
-        <div className="flex gap-2 border-b border-slate-200">
-          <button
-            onClick={() => setCurrentView("comparison")}
-            className={`px-4 py-2 text-sm font-semibold transition ${
-              currentView === "comparison"
-                ? "border-b-2 border-primary text-primary"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            XML Comparison
-          </button>
-          <button
-            onClick={() => setCurrentView("editor")}
-            className={`px-4 py-2 text-sm font-semibold transition ${
-              currentView === "editor"
-                ? "border-b-2 border-primary text-primary"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            XML Editor
-          </button>
-          <button
-            onClick={() => setCurrentView("neighbour")}
-            className={`px-4 py-2 text-sm font-semibold transition ${
-              currentView === "neighbour"
-                ? "border-b-2 border-primary text-primary"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Neighbour Excel
-          </button>
-          <button
-            onClick={() => setCurrentView("dynamic")}
-            className={`px-4 py-2 text-sm font-semibold transition ${
-              currentView === "dynamic"
-                ? "border-b-2 border-primary text-primary"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Dynamic Excel
-          </button>
-          <button
-            onClick={() => setCurrentView("matrix")}
-            className={`px-4 py-2 text-sm font-semibold transition ${
-              currentView === "matrix"
-                ? "border-b-2 border-primary text-primary"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Site Compare
-          </button>
-        </div>
-
-        {currentView === "comparison" && <XmlComparison />}
-        {currentView === "neighbour" && <NeighborListExcel />}
-        {currentView === "dynamic" && <DynamicPathExcel />}
-        {currentView === "matrix" && <SiteConfigMatrix />}
-        {currentView === "editor" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-2 border-b border-slate-200 pb-2">
-              <button
-                onClick={() => setEditorMode("normal")}
-                className={`px-3 py-1.5 text-xs font-semibold transition ${
-                  editorMode === "normal"
-                    ? "rounded-md bg-[#2596be] text-white"
-                    : "rounded-md text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                Basic
-              </button>
-              <button
-                onClick={() => setEditorMode("bulk")}
-                className={`px-3 py-1.5 text-xs font-semibold transition ${
-                  editorMode === "bulk"
-                    ? "rounded-md bg-[#2596be] text-white"
-                    : "rounded-md text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                Bulk
-              </button>
-            </div>
-            {editorMode === "normal" ? <XmlEditor /> : <BulkXmlEditor />}
-          </div>
-        )}
-
-        <footer className="mt-8 border-t border-slate-200 pt-6 pb-4 text-center text-xs text-slate-500">
-          <p className="mb-2">
-            FemtoXML Studio — Professional XML Comparator & Editor for RAN
-            engineers
-          </p>
-          <p className="mb-2">
-            © {new Date().getFullYear()} FemtoXML Studio. Developed by{" "}
-            <a
-              href="https://www.linkedin.com/in/bhuiamh/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-slate-600 hover:text-slate-900 underline transition"
-            >
-              Mahmudul Hasan Bhuia
-            </a>
-          </p>
-          <p className="text-slate-400">
-            Open-source XML comparison and editing tool
-          </p>
-        </footer>
-      </div>
-    </div>
+    <AppShell
+      current={currentView}
+      onSelect={setCurrentView}
+      onSignOut={signOut}
+      actions={
+        currentView === "editor" ? (
+          <SegmentedControl<EditorMode>
+            value={editorMode}
+            onChange={setEditorMode}
+            options={[
+              { value: "normal", label: "Tree editor" },
+              { value: "bulk", label: "Bulk editor" },
+            ]}
+          />
+        ) : undefined
+      }
+    >
+      {currentView === "comparison" && <XmlComparison />}
+      {currentView === "matrix" && <SiteConfigMatrix />}
+      {currentView === "neighbour" && <NeighborListExcel />}
+      {currentView === "dynamic" && <DynamicPathExcel />}
+      {currentView === "editor" &&
+        (editorMode === "normal" ? <XmlEditor /> : <BulkXmlEditor />)}
+    </AppShell>
   );
 }
 
