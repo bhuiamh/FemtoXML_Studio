@@ -446,17 +446,17 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
     return (
       <div
         key={node.id}
-        className={`select-none ${isActiveMatch ? "bg-yellow-50" : ""}`}
+        className={`select-none ${isActiveMatch ? "bg-warn-soft" : ""}`}
       >
         <div
-          className="flex items-center gap-2 border-b border-slate-100 p-2 hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-2 border-b border-line-soft p-2 hover:bg-surface-sunk transition-colors"
           style={{ paddingLeft: `${level * 20 + 8}px` }}
         >
           {/* Expander icon or spacer */}
           {hasChildren ? (
             <button
               onClick={() => toggleExpand(node.id)}
-              className="flex h-5 w-5 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-600 focus:outline-none"
+              className="flex h-5 w-5 items-center justify-center rounded text-ink-3 hover:bg-line hover:text-ink-2 focus:outline-none"
             >
               {isExpanded ? "▼" : "▶"}
             </button>
@@ -465,7 +465,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
           )}
   
           {/* Node name */}
-          <span className="font-mono text-sm font-semibold text-slate-700 min-w-[100px]">
+          <span className="font-mono text-sm font-semibold text-ink-2 min-w-[100px]">
             {node.name}
           </span>
   
@@ -477,7 +477,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
               onChange={(e) => updateNodeValue(node.id, e.target.value)}
               placeholder="..."
               spellCheck={false}
-              className="w-full rounded border border-slate-300 px-2 py-1 text-xs font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]/50"
+              className="w-full rounded-md border border-line px-2 py-1 text-xs font-mono focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
             />
           </div>
   
@@ -487,15 +487,15 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
               {visibleAttributes.map(([key, val]) => (
                 <div
                   key={key}
-                  className="flex items-center gap-1 rounded bg-[#2596be]/10 px-2 py-0.5 text-xs whitespace-nowrap"
+                  className="flex items-center gap-1 rounded bg-accent-soft px-2 py-0.5 text-xs whitespace-nowrap"
                 >
-                  <span className="font-semibold text-[#2596be]">{key}=</span>
+                  <span className="font-semibold text-accent-ink">{key}=</span>
                   <input
                     type="text"
                     value={val}
                     onChange={(e) => updateNodeAttribute(node.id, key, e.target.value)}
                     spellCheck={false}
-                    className="w-20 rounded border border-[#2596be]/20 bg-white px-1.5 py-0.5 text-xs focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]/40"
+                    className="w-20 rounded border border-accent/30 bg-surface px-1.5 py-0.5 text-xs focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
                   />
                 </div>
               ))}
@@ -506,7 +506,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
           <div className="flex items-center gap-1 ml-auto">
             <button
               onClick={() => duplicatePath(node.id)}
-              className="rounded px-2 py-1 text-xs text-[#2596be] hover:bg-[#2596be]/10 transition-colors"
+              className="rounded px-2 py-1 text-xs text-accent-ink hover:bg-accent-soft transition-colors"
               title="Duplicate this path with all children"
             >
               Duplicate
@@ -514,7 +514,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
   
             <button
               onClick={() => deleteNode(node.id)}
-              className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors"
+              className="rounded px-2 py-1 text-xs text-red-600 hover:bg-bad-soft transition-colors"
             >
               Delete
             </button>
@@ -533,12 +533,12 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
 
   
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-5 py-4 shadow-card">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">XML Editor</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Upload, edit, and download XML files
+          <p className="text-[13px] leading-relaxed text-ink-2">
+            Browse the parameter tree, edit values and attributes, duplicate or
+            delete instances, then download the result.
           </p>
         </div>
         <div className="flex gap-3">
@@ -546,7 +546,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
             <button
               onClick={undo}
               disabled={!canUndo}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-sunk disabled:opacity-50 disabled:cursor-not-allowed"
               title="Undo (Ctrl+Z)"
             >
               ↶ Undo
@@ -554,13 +554,13 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
             <button
               onClick={redo}
               disabled={!canRedo}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-sunk disabled:opacity-50 disabled:cursor-not-allowed"
               title="Redo (Ctrl+Y)"
             >
               ↷ Redo
             </button>
           </div>
-          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-sunk">
             <svg
               className="h-4 w-4"
               fill="none"
@@ -586,7 +586,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
           <button
             onClick={handleDownload}
             disabled={tree.length === 0}
-            className="rounded-lg bg-[#2596be] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e7a9a] disabled:bg-slate-300 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-accent to-accent-deep h-9 px-3.5 text-[13px] font-semibold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-line disabled:to-line disabled:text-ink-3"
           >
             Download Edited XML
           </button>
@@ -604,34 +604,34 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
             }
           }}
           placeholder="Search by parameter name, full path, or value"
-          className="min-w-[260px] flex-1 rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
+          className="min-w-[260px] flex-1 rounded-md border border-line px-3 py-1.5 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
         />
         <button
           onClick={runSearch}
-          className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-md border border-line bg-surface h-8 px-3 text-xs font-semibold text-ink-2 hover:bg-surface-sunk"
         >
           Search
         </button>
         <button
           onClick={() => goToSearchResult("prev")}
           disabled={searchResults.length === 0}
-          className="rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md border border-line bg-surface px-2 py-1.5 text-xs text-ink-2 hover:bg-surface-sunk disabled:cursor-not-allowed disabled:opacity-50"
         >
           Prev
         </button>
         <button
           onClick={() => goToSearchResult("next")}
           disabled={searchResults.length === 0}
-          className="rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md border border-line bg-surface px-2 py-1.5 text-xs text-ink-2 hover:bg-surface-sunk disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next
         </button>
-        <span className="ml-2 text-xs text-slate-500">
+        <span className="ml-2 text-xs text-ink-3">
           {searchResults.length > 0
             ? `Match ${searchIndex + 1} of ${searchResults.length}`
             : "Type a query and press Enter or Search"}
         </span>
-        <div className="ml-4 flex items-center gap-3 text-xs text-slate-600">
+        <div className="ml-4 flex items-center gap-3 text-xs text-ink-2">
           <span className="font-medium">Search in:</span>
           <label className="flex items-center gap-1">
             <input
@@ -667,27 +667,27 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
       </div>
 
       {isLoading && (
-        <div className="mb-4 rounded-lg bg-[#2596be]/10 p-4 text-center text-sm text-[#2596be]">
+        <div className="mb-4 rounded-lg bg-accent-soft p-4 text-center text-sm text-accent-ink">
           Loading XML file...
         </div>
       )}
 
       {fileName && !isLoading && (
-        <div className="mb-4 rounded-lg bg-slate-50 px-4 py-2 text-sm text-slate-700">
+        <div className="mb-4 rounded-lg bg-surface-sunk px-4 py-2 text-sm text-ink-2">
           <span className="font-medium">File:</span> {fileName}
         </div>
       )}
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+        <div className="mb-4 rounded-lg bg-bad-soft border border-bad/35 p-4 text-sm text-bad">
           {error}
         </div>
       )}
 
       {tree.length === 0 && !isLoading && !error && (
-        <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+        <div className="rounded-lg border-2 border-dashed border-line bg-surface-sunk p-12 text-center">
           <svg
-            className="mx-auto h-12 w-12 text-slate-400"
+            className="mx-auto h-12 w-12 text-ink-3"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -699,14 +699,14 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
               d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
             />
           </svg>
-          <p className="mt-4 text-sm text-slate-600">
+          <p className="mt-4 text-sm text-ink-2">
             Upload an XML file to start editing
           </p>
         </div>
       )}
 
       {tree.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-lg border border-line bg-surface">
           <div className="max-h-[600px] overflow-y-auto">
             {tree.map((node) => renderNode(node))}
           </div>
@@ -714,38 +714,38 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
       )}
 
       {isSearchModalOpen && searchResults.length > 0 && (
-        <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/40">
-          <div className="max-h-[80vh] w-full max-w-4xl overfl rounded-lg bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-ink/50">
+          <div className="max-h-[80vh] w-full max-w-4xl overfl rounded-lg bg-surface shadow-xl">
+            <div className="flex items-center justify-between border-b border-line px-4 py-2">
               <div>
-                <h2 className="text-sm font-semibold text-slate-800">
+                <h2 className="text-sm font-semibold text-ink">
                   Search results ({searchResults.length})
                 </h2>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-ink-3">
                   You can edit values directly here. Click Go to focus in the tree.
                 </p>
               </div>
               <button
                 onClick={() => setIsSearchModalOpen(false)}
-                className="rounded px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+                className="rounded px-2 py-1 text-xs text-ink-2 hover:bg-surface-sunk"
               >
                 Close
               </button>
             </div>
             <div className="max-h-[70vh] overflow-y-auto">
               <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-slate-50">
+                <thead className="sticky top-0 bg-surface-sunk">
                   <tr>
-                    <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">
+                    <th className="border-b border-line px-3 py-2 font-semibold text-ink-2">
                       Full path
                     </th>
-                    <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">
+                    <th className="border-b border-line px-3 py-2 font-semibold text-ink-2">
                       Parameter
                     </th>
-                    <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">
+                    <th className="border-b border-line px-3 py-2 font-semibold text-ink-2">
                       Value
                     </th>
-                    <th className="border-b border-slate-200 px-3 py-2" />
+                    <th className="border-b border-line px-3 py-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -754,11 +754,11 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
                     if (!node) return null;
                     const cleanPath = node.path.replace(/\[\d+\]/g, "");
                     return (
-                      <tr key={result.id} className="border-b border-slate-100">
-                        <td className="px-3 py-1.5 font-mono text-[11px] text-slate-800">
+                      <tr key={result.id} className="border-b border-line-soft">
+                        <td className="px-3 py-1.5 font-mono text-[11px] text-ink">
                           {cleanPath}
                         </td>
-                        <td className="px-3 py-1.5 text-slate-700">{node.name}</td>
+                        <td className="px-3 py-1.5 text-ink-2">{node.name}</td>
                         <td className="px-3 py-1.5">
                           <input
                             type="text"
@@ -766,7 +766,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
                             onChange={(e) =>
                               updateNodeValue(node.id, e.target.value)
                             }
-                            className="min-w-full rounded border border-slate-300 px-2 py-1 text-[11px] font-mono focus:border-[#2596be] focus:outline-none focus:ring-1 focus:ring-[#2596be]"
+                            className="min-w-full rounded-md border border-line px-2 py-1 text-[11px] font-mono focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
                           />
                         </td>
                         <td className="px-3 py-1.5 text-right">
@@ -775,7 +775,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
                               focusNode(node.id);
                               setIsSearchModalOpen(false);
                             }}
-                            className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50 w-12"
+                            className="rounded-md border border-line bg-surface px-2 py-1 text-[11px] text-ink-2 hover:bg-surface-sunk w-12"
                           >
                             Go to
                           </button>

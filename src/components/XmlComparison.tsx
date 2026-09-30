@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Diff } from "../workers/xmlDiffWorker";
 import { exportToCSV, exportToExcel } from "../utils/export";
+import { Loader, Spinner } from "./ui";
 
 type ChangeKind = "added" | "removed" | "changed";
 type Stats = Record<ChangeKind, number>;
@@ -342,24 +343,22 @@ export function XmlComparison() {
   return (
     <>
       {/* Header with Compare button and search - only for comparison view */}
-      <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5 shadow-card sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-            FemtoXML Studio
-          </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Compare, edit and export device XMLs — optimized for Femto devices
-            and RAN engineers.
+          <p className="max-w-2xl text-[13px] leading-relaxed text-ink-2">
+            Load or paste two device XMLs and compare them parameter by
+            parameter. Results are virtualised, so exports with hundreds of
+            thousands of parameters stay responsive.
           </p>
         </div>
 
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <div className="inline-flex items-center gap-2">
-            <span className="rounded-full bg-slate-900 px-3 py-1 text-sm font-semibold text-slate-100">
+            <span className="rounded-full bg-accent-soft px-3 py-1 text-[13px] font-semibold text-accent-ink">
               {isComparing ? "Comparing…" : changesBadge}
             </span>
             {lastRun && (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-ink-3">
                 Last run: {lastRun.toLocaleTimeString()}
               </span>
             )}
@@ -370,7 +369,7 @@ export function XmlComparison() {
               type="button"
               onClick={handleCompare}
               disabled={isComparing}
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-lg bg-accent h-9 px-3.5 text-[13px] font-semibold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isComparing ? "Comparing…" : "Compare"}
             </button>
@@ -380,7 +379,7 @@ export function XmlComparison() {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder="Search path/value/status…"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary-200 sm:w-72"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none placeholder:text-ink-3 focus:border-accent focus:ring-2 focus:ring-accent/25 sm:w-72"
               />
             </div>
           </div>
@@ -389,21 +388,21 @@ export function XmlComparison() {
 
       {/* Progress indicator shown while comparing XMLs */}
       {isComparing && progress && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-line bg-surface p-4 shadow-card">
           <div className="flex items-center gap-3">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-primary" />
+            <Loader size="sm" />
             <div className="flex w-full flex-col gap-1">
               <div className="flex items-baseline justify-between gap-3">
-                <div className="text-sm font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-ink">
                   {progress.message ?? "Comparing…"}
                 </div>
-                <div className="text-sm font-semibold text-slate-700">
+                <div className="text-sm font-semibold text-ink-2">
                   {progress.percent}%
                 </div>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-surface-sunk">
                 <div
-                  className="h-full rounded-full bg-primary transition-[width]"
+                  className="h-full rounded-full bg-accent transition-[width]"
                   style={{
                     width: `${Math.min(100, Math.max(0, progress.percent))}%`,
                   }}
@@ -416,32 +415,32 @@ export function XmlComparison() {
 
       {/* Left and Right XML input panels */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-line bg-surface p-4 shadow-card">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-ink">
               Left XML
             </h2>
             <div className="flex items-center gap-3">
               {leftFileName && (
                 <div className="flex flex-col gap-1">
                   <span
-                    className="max-w-[220px] truncate text-xs text-slate-500"
+                    className="max-w-[220px] truncate text-xs text-ink-3"
                     title={leftFileName}
                   >
                     {leftFileName}
                   </span>
-                  <span className="max-w-[220px] truncate text-xs font-semibold text-primary">
+                  <span className="max-w-[220px] truncate text-xs font-semibold text-accent">
                     {formatValue(leftFileValue ?? undefined)}
                   </span>
                 </div>
               )}
               {leftFileLoading && (
-                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                  <span className="h-3 w-3 animate-spin rounded-full border border-slate-300 border-t-primary" />
+                <span className="inline-flex items-center gap-1 text-xs text-ink-3">
+                  <Spinner className="h-3 w-3 text-accent" />
                   Loading…
                 </span>
               )}
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-100">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2 text-sm font-semibold text-accent-ink hover:bg-accent-soft">
                 <input
                   type="file"
                   accept=".xml"
@@ -458,41 +457,41 @@ export function XmlComparison() {
             onChange={(e) => setLeftXml(e.target.value)}
             spellCheck={false}
             placeholder="Paste device XML here"
-            className="h-72 w-full resize-y rounded-xl border border-slate-300 bg-slate-50 p-3 font-mono text-sm text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-200"
+            className="h-72 w-full resize-y rounded-xl border border-line bg-surface-sunk p-3 font-mono text-sm text-ink shadow-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
           />
           {leftError && (
-            <div className="mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="mt-2 rounded-xl border border-bad/35 bg-bad-soft px-3 py-2 text-sm text-bad">
               Left XML error: {leftError}
             </div>
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-line bg-surface p-4 shadow-card">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-ink">
               Right XML
             </h2>
             <div className="flex items-center gap-3">
               {rightFileName && (
                 <div className="flex flex-col gap-1">
                   <span
-                    className="max-w-[220px] truncate text-xs text-slate-500"
+                    className="max-w-[220px] truncate text-xs text-ink-3"
                     title={rightFileName}
                   >
                     {rightFileName}
                   </span>
-                  <span className="max-w-[220px] truncate text-xs font-semibold text-primary">
+                  <span className="max-w-[220px] truncate text-xs font-semibold text-accent">
                     {formatValue(rightFileValue ?? undefined)}
                   </span>
                 </div>
               )}
               {rightFileLoading && (
-                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                  <span className="h-3 w-3 animate-spin rounded-full border border-slate-300 border-t-primary" />
+                <span className="inline-flex items-center gap-1 text-xs text-ink-3">
+                  <Spinner className="h-3 w-3 text-accent" />
                   Loading…
                 </span>
               )}
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-100">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2 text-sm font-semibold text-accent-ink hover:bg-accent-soft">
                 <input
                   type="file"
                   accept=".xml"
@@ -509,10 +508,10 @@ export function XmlComparison() {
             onChange={(e) => setRightXml(e.target.value)}
             spellCheck={false}
             placeholder="Paste device XML here"
-            className="h-72 w-full resize-y rounded-xl border border-slate-300 bg-slate-50 p-3 font-mono text-sm text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-200"
+            className="h-72 w-full resize-y rounded-xl border border-line bg-surface-sunk p-3 font-mono text-sm text-ink shadow-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
           />
           {rightError && (
-            <div className="mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="mt-2 rounded-xl border border-bad/35 bg-bad-soft px-3 py-2 text-sm text-bad">
               Right XML error: {rightError}
             </div>
           )}
@@ -520,13 +519,13 @@ export function XmlComparison() {
       </section>
 
       {/* Differences comparison results section */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-xl border border-line bg-surface p-4 shadow-card">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-ink">
               Differences
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-ink-2">
               Paths include element index (e.g.{" "}
               <span className="font-mono">band[1]</span>), attributes (
               <span className="font-mono">@attr</span>), and text nodes (
@@ -539,16 +538,16 @@ export function XmlComparison() {
             <div>
               {/* Statistics badges */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-800">
+              <span className="rounded-full border border-accent/30 bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-ink">
                 Added: {stats.added}
               </span>
-              <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-800">
+              <span className="rounded-full border border-bad/35 bg-bad-soft px-3 py-1 text-sm font-semibold text-bad">
                 Removed: {stats.removed}
               </span>
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
+              <span className="rounded-full border border-warn/35 bg-warn-soft px-3 py-1 text-sm font-semibold text-warn">
                 Changed: {stats.changed}
               </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700">
+              <span className="rounded-full border border-line bg-surface-sunk px-3 py-1 text-sm font-semibold text-ink-2">
                 Showing: {filteredDiffs.length}
               </span>
             </div>
@@ -556,7 +555,7 @@ export function XmlComparison() {
                
 
                 {/* Change type filter buttons (added, removed, changed) */}
-                <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 mb-1">
+                <div className="flex items-center gap-1 rounded-full border border-line bg-surface p-1 mb-1">
                  
                   <button
                   type="button"
@@ -569,8 +568,8 @@ export function XmlComparison() {
                   }
                   className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
                     isAddedOnly
-                      ? "border-cyan-300 bg-cyan-100 text-cyan-900"
-                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                      ? "border-cyan-300 bg-accent-soft text-accent-ink"
+                      : "border-line bg-surface text-ink-2 hover:bg-surface-sunk"
                   }`}
                   title="Show only Added"
                 >
@@ -583,15 +582,15 @@ export function XmlComparison() {
                     const colors =
                       k === "added"
                         ? on
-                          ? "bg-cyan-100 text-cyan-900"
-                          : "text-slate-600 hover:bg-slate-50"
+                          ? "bg-accent-soft text-accent-ink"
+                          : "text-ink-2 hover:bg-surface-sunk"
                         : k === "removed"
                           ? on
-                            ? "bg-rose-100 text-rose-900"
-                            : "text-slate-600 hover:bg-slate-50"
+                            ? "bg-bad-soft text-bad"
+                            : "text-ink-2 hover:bg-surface-sunk"
                           : on
-                            ? "bg-amber-100 text-amber-900"
-                            : "text-slate-600 hover:bg-slate-50";
+                            ? "bg-warn-soft text-warn"
+                            : "text-ink-2 hover:bg-surface-sunk";
                     return (
                       <button
                         key={k}
@@ -644,10 +643,10 @@ export function XmlComparison() {
                       }
                       setExcludedQuickFilters(newExcluded);
                     }}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition border border-slate-200 ${
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition border border-line ${
                       isExcluded
-                        ? "bg-rose-100 text-rose-900"
-                        : "text-slate-600 hover:bg-slate-50"
+                        ? "bg-bad-soft text-bad"
+                        : "text-ink-2 hover:bg-surface-sunk"
                     }`}
                     title={
                       isExcluded
@@ -664,9 +663,9 @@ export function XmlComparison() {
         </div>
 
         {/* Differences results table */}
-        <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+        <div className="mt-4 overflow-hidden rounded-xl border border-line">
           <div
-            className={`grid bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 ${
+            className={`grid bg-surface-sunk px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-2 ${
               showLeftCol && showRightCol ? "grid-cols-12" : "grid-cols-12"
             }`}
           >
@@ -683,7 +682,7 @@ export function XmlComparison() {
           </div>
 
           {filteredDiffs.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-slate-600">
+            <div className="px-4 py-8 text-center text-sm text-ink-2">
               {isComparing
                 ? "Comparing…"
                 : differences.length === 0
@@ -693,7 +692,7 @@ export function XmlComparison() {
           ) : (
             <div
               ref={parentRef}
-              className="h-[520px] overflow-auto bg-white"
+              className="h-[520px] overflow-auto bg-surface"
               style={{ contain: "strict" }}
             >
               <div
@@ -704,15 +703,15 @@ export function XmlComparison() {
                   const diff = filteredDiffs[virtualRow.index]!;
                   const rowBg =
                     diff.change === "added"
-                      ? "bg-cyan-50"
+                      ? "bg-accent-soft"
                       : diff.change === "removed"
-                        ? "bg-rose-50"
-                        : "bg-amber-50";
+                        ? "bg-bad-soft"
+                        : "bg-warn-soft";
 
                   return (
                     <div
                       key={`${diff.path}-${diff.change}-${virtualRow.index}`}
-                      className={`absolute left-0 top-0 w-full border-b border-slate-100 px-3 py-2 text-sm ${rowBg}`}
+                      className={`absolute left-0 top-0 w-full border-b border-line-soft px-3 py-2 text-sm ${rowBg}`}
                       style={{
                         transform: `translateY(${virtualRow.start}px)`,
                         height: `${virtualRow.size}px`,
@@ -720,21 +719,21 @@ export function XmlComparison() {
                     >
                       <div className="grid grid-cols-12 gap-2">
                         <div
-                          className={`${showLeftCol && showRightCol ? "col-span-6" : "col-span-8"} break-words font-mono text-xs text-slate-900`}
+                          className={`${showLeftCol && showRightCol ? "col-span-6" : "col-span-8"} break-words font-mono text-xs text-ink`}
                         >
                           {diff.path}
                         </div>
                         {showLeftCol && (
-                          <div className="col-span-2 break-words font-mono text-xs text-slate-800">
+                          <div className="col-span-2 break-words font-mono text-xs text-ink">
                             {formatValue(diff.leftValue)}
                           </div>
                         )}
                         {showRightCol && (
-                          <div className="col-span-2 break-words font-mono text-xs text-slate-800">
+                          <div className="col-span-2 break-words font-mono text-xs text-ink">
                             {formatValue(diff.rightValue)}
                           </div>
                         )}
-                        <div className="col-span-2 text-right text-xs font-semibold capitalize text-slate-900">
+                        <div className="col-span-2 text-right text-xs font-semibold capitalize text-ink">
                           {diff.change}
                         </div>
                       </div>
@@ -750,13 +749,11 @@ export function XmlComparison() {
         <div>
           {filteredDiffs.length > 0 && (
             <div className="flex items-center justify-between gap-3 pt-4">
-              <h1 className="text-base font-semibold text-slate-900">
-                Export Report
-              </h1>
+              <h3 className="text-[13px] font-semibold text-ink">Export report</h3>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleExportCSV}
-                  className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-semibold text-green-700 hover:bg-green-100"
+                  className="inline-flex items-center gap-2 rounded-lg border border-ok/30 bg-ok-soft h-8 px-3 text-xs font-semibold text-ok hover:brightness-105"
                   title="Export to CSV (Google Sheets compatible)"
                 >
                   <svg
@@ -776,7 +773,7 @@ export function XmlComparison() {
                 </button>
                 <button
                   onClick={handleExportExcel}
-                  className="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-semibold text-green-700 hover:bg-green-100"
+                  className="inline-flex items-center gap-2 rounded-lg border border-ok/30 bg-ok-soft h-8 px-3 text-xs font-semibold text-ok hover:brightness-105"
                   title="Export to Excel"
                 >
                   <svg

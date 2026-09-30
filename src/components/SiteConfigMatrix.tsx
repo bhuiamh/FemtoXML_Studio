@@ -8,6 +8,8 @@ import {
   type SiteDoc,
 } from "../utils/siteMatrix";
 import { downloadMatrixCsv, downloadMatrixWorkbook } from "../utils/siteMatrixExport";
+import { LoadingPanel } from "./ui";
+import { yieldToBrowser } from "../utils/yieldToBrowser";
 
 type LoadedSite = { id: string; doc: SiteDoc; sizeKb: number };
 type LoadError = { fileName: string; message: string };
@@ -82,6 +84,7 @@ export default function SiteConfigMatrix() {
 
     for (const file of files) {
       try {
+        await yieldToBrowser();
         const text = await file.text();
         added.push({
           id: `${file.name}-${file.size}-${file.lastModified}`,
@@ -131,20 +134,17 @@ export default function SiteConfigMatrix() {
 
   const statusStyle = (row: MatrixRow) =>
     row.status === "mismatch"
-      ? "bg-rose-50"
+      ? "bg-bad-soft"
       : row.status === "missing"
-        ? "bg-amber-50"
+        ? "bg-warn-soft"
         : "";
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <header className="rounded-xl border border-line bg-surface p-5 shadow-card">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">
-              Site Configuration Matrix
-            </h1>
-            <p className="mt-1 max-w-3xl text-sm text-slate-600">
+            <p className="max-w-3xl text-[13px] leading-relaxed text-ink-2">
               Load several site XML exports and compare them side by side. Every
               parameter becomes a row, every site a column, so a configuration
               mismatch shows up as soon as you read across the row. Export to CSV
@@ -153,7 +153,7 @@ export default function SiteConfigMatrix() {
           </div>
 
           <div className="flex shrink-0 flex-col gap-2">
-            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-600">
+            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-accent h-9 px-3.5 text-[13px] font-semibold text-white shadow-sm hover:brightness-110">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -178,7 +178,7 @@ export default function SiteConfigMatrix() {
             {loaded.length > 0 && (
               <button
                 onClick={clearAll}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-sunk"
               >
                 Clear all
               </button>
@@ -188,20 +188,20 @@ export default function SiteConfigMatrix() {
 
         {loaded.length > 0 && (
           <>
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line-soft pt-4">
               {loaded.map((item) => (
                 <span
                   key={item.id}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs"
+                  className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface-sunk px-3 py-1.5 text-xs"
                   title={`${item.doc.sourceFile} · ${item.sizeKb} KB · ${item.doc.values.size} parameters`}
                 >
-                  <span className="font-semibold text-slate-900">{item.doc.siteId}</span>
-                  <span className="text-slate-500">
+                  <span className="font-semibold text-ink">{item.doc.siteId}</span>
+                  <span className="text-ink-3">
                     {item.doc.values.size.toLocaleString()} params
                   </span>
                   <button
                     onClick={() => removeSite(item.id)}
-                    className="text-slate-400 transition hover:text-rose-600"
+                    className="text-ink-3 transition hover:text-bad"
                     title="Remove this site"
                   >
                     ✕
@@ -210,7 +210,7 @@ export default function SiteConfigMatrix() {
               ))}
             </div>
 
-            <div className="mt-4 flex flex-wrap items-end gap-4 border-t border-slate-100 pt-4">
+            <div className="mt-4 flex flex-wrap items-end gap-4 border-t border-line-soft pt-4">
               <div className="flex flex-wrap gap-3">
                 {[
                   { label: "Sites", value: matrix.sites.length },
@@ -220,12 +220,12 @@ export default function SiteConfigMatrix() {
                 ].map((s) => (
                   <div
                     key={s.label}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2"
+                    className="rounded-xl border border-line bg-surface-sunk px-4 py-2"
                   >
-                    <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    <div className="text-xs font-medium uppercase tracking-wide text-ink-3">
                       {s.label}
                     </div>
-                    <div className="text-lg font-semibold text-slate-900">
+                    <div className="text-lg font-semibold text-ink">
                       {s.value.toLocaleString()}
                     </div>
                   </div>
@@ -234,55 +234,55 @@ export default function SiteConfigMatrix() {
 
               <div className="flex flex-1 flex-wrap items-end justify-end gap-3">
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-slate-500">Output file name</span>
+                  <span className="text-xs font-medium text-ink-3">Output file name</span>
                   <input
                     value={outputName}
                     onChange={(e) => setOutputName(e.target.value)}
                     spellCheck={false}
-                    className="w-64 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-200"
+                    className="w-64 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   />
                 </label>
                 <button
                   onClick={() => handleExport("csv")}
                   disabled={isExporting !== null || matrix.rows.length === 0}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 shadow-sm hover:bg-surface-sunk disabled:cursor-not-allowed disabled:bg-surface-sunk disabled:text-ink-3"
                 >
                   {isExporting === "csv" ? "Writing…" : "Download CSV"}
                 </button>
                 <button
                   onClick={() => handleExport("xlsx")}
                   disabled={isExporting !== null || matrix.rows.length === 0}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-ok h-9 px-3.5 text-[13px] font-semibold text-white shadow-sm hover:brightness-110 disabled:cursor-not-allowed disabled:bg-line"
                 >
                   {isExporting === "xlsx" ? "Building…" : "Download Excel"}
                 </button>
               </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3">
-              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600">
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line-soft pt-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-2">
                 <input
                   type="checkbox"
                   checked={hideVolatile}
                   onChange={(e) => setHideVolatile(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary-200"
+                  className="h-4 w-4 rounded border-line text-accent focus:ring-accent/25"
                 />
                 Hide volatile data
                 <button
                   type="button"
                   onClick={() => setShowRules((v) => !v)}
-                  className="font-semibold text-primary hover:underline"
+                  className="font-semibold text-accent hover:underline"
                 >
                   ({matrix.totals.hidden.toLocaleString()} hidden — what&apos;s this?)
                 </button>
               </label>
 
-              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600">
+              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-2">
                 <input
                   type="checkbox"
                   checked={mismatchesOnly}
                   onChange={(e) => setMismatchesOnly(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary-200"
+                  className="h-4 w-4 rounded border-line text-accent focus:ring-accent/25"
                 />
                 Mismatches only
               </label>
@@ -293,21 +293,21 @@ export default function SiteConfigMatrix() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Filter the preview by path or value…"
                   spellCheck={false}
-                  className="w-72 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-200"
+                  className="w-72 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
               </div>
             </div>
 
             {showRules && (
-              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                <p className="mb-2 font-semibold text-slate-700">
+              <div className="mt-3 rounded-xl border border-line bg-surface-sunk p-3 text-xs text-ink-2">
+                <p className="mb-2 font-semibold text-ink-2">
                   Hidden while “Hide volatile data” is on — these always differ
                   between devices and are not configuration:
                 </p>
                 <ul className="space-y-1">
                   {VOLATILE_RULES.map((rule) => (
                     <li key={rule.label}>
-                      <span className="font-semibold text-slate-700">{rule.label}</span>{" "}
+                      <span className="font-semibold text-ink-2">{rule.label}</span>{" "}
                       — {rule.detail}
                     </li>
                   ))}
@@ -319,16 +319,16 @@ export default function SiteConfigMatrix() {
       </header>
 
       {isLoading && (
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-primary" />
-          <span className="text-sm font-semibold text-slate-700">
-            Parsing site XML files…
-          </span>
+        <div className="rounded-xl border border-line bg-surface shadow-card">
+          <LoadingPanel
+            title="Reading site exports"
+            detail="Collecting every parameter from each device"
+          />
         </div>
       )}
 
       {(errors.length > 0 || exportError) && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+        <div className="rounded-xl border border-bad/35 bg-bad-soft p-4 text-sm text-bad">
           {exportError && <p className="font-semibold">{exportError}</p>}
           {errors.map((e, i) => (
             <p key={i}>
@@ -351,19 +351,19 @@ export default function SiteConfigMatrix() {
             if (e.dataTransfer.files.length > 0) void loadFiles(e.dataTransfer.files);
           }}
           onClick={() => inputRef.current?.click()}
-          className={`cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center transition ${
+          className={`cursor-pointer rounded-xl border-2 border-dashed p-12 text-center transition ${
             isDragging
-              ? "border-primary bg-primary-50"
-              : "border-slate-300 bg-slate-50 hover:border-primary-300 hover:bg-white"
+              ? "border-accent bg-accent-soft"
+              : "border-line bg-surface-sunk hover:border-accent/50 hover:bg-surface"
           }`}
         >
-          <p className="text-sm font-semibold text-slate-700">
+          <p className="text-sm font-semibold text-ink-2">
             Drop the site XML exports here, or click to browse
           </p>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-ink-3">
             Load as many sites as you like — each becomes one column. Site IDs come
             from file names of the form{" "}
-            <code className="rounded bg-slate-200 px-1">
+            <code className="rounded bg-line px-1">
               &lt;serial&gt;_&lt;siteId&gt;_&lt;date&gt;.xml
             </code>
             .
@@ -372,29 +372,29 @@ export default function SiteConfigMatrix() {
       )}
 
       {loaded.length === 1 && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-xl border border-warn/35 bg-warn-soft px-4 py-3 text-sm text-warn">
           Only one site is loaded — add at least one more to compare. The export
           works with a single site too, but every row will read “Match”.
         </div>
       )}
 
       {matrix.sites.length > 0 && (
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-            <h2 className="text-base font-semibold text-slate-900">
+        <section className="rounded-xl border border-line bg-surface shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft px-4 py-3">
+            <h2 className="text-base font-semibold text-ink">
               Preview
-              <span className="ml-2 text-sm font-normal text-slate-500">
+              <span className="ml-2 text-sm font-normal text-ink-3">
                 {visibleRows.length.toLocaleString()} of{" "}
                 {matrix.rows.length.toLocaleString()} exported row(s)
               </span>
             </h2>
             <div className="flex items-center gap-3 text-xs">
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded border border-rose-200 bg-rose-50" />
+                <span className="h-3 w-3 rounded border border-bad/35 bg-bad-soft" />
                 Mismatch
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded border border-amber-200 bg-amber-50" />
+                <span className="h-3 w-3 rounded border border-warn/35 bg-warn-soft" />
                 Missing on some sites
               </span>
             </div>
@@ -403,7 +403,7 @@ export default function SiteConfigMatrix() {
           <div ref={scrollRef} className="max-h-[560px] overflow-auto">
             <div style={{ width: gridWidth }}>
               {/* Header */}
-              <div className="sticky top-0 z-10 flex border-b border-slate-200 bg-slate-100 text-xs font-semibold text-slate-700">
+              <div className="sticky top-0 z-10 flex border-b border-line bg-surface-sunk text-xs font-semibold text-ink-2">
                 <div className="shrink-0 px-2 py-2" style={{ width: PATH_COL }}>
                   Parameter Path
                 </div>
@@ -413,7 +413,7 @@ export default function SiteConfigMatrix() {
                 {matrix.sites.map((site) => (
                   <div
                     key={site.label}
-                    className="shrink-0 border-l border-slate-200 px-2 py-2"
+                    className="shrink-0 border-l border-line px-2 py-2"
                     style={{ width: SITE_COL }}
                     title={site.sourceFile}
                   >
@@ -421,7 +421,7 @@ export default function SiteConfigMatrix() {
                   </div>
                 ))}
                 <div
-                  className="shrink-0 border-l border-slate-200 px-2 py-2"
+                  className="shrink-0 border-l border-line px-2 py-2"
                   style={{ width: STATUS_COL }}
                 >
                   Status
@@ -430,7 +430,7 @@ export default function SiteConfigMatrix() {
 
               {/* Virtualised body */}
               {visibleRows.length === 0 ? (
-                <div className="px-4 py-10 text-center text-sm text-slate-500">
+                <div className="px-4 py-10 text-center text-sm text-ink-3">
                   {matrix.rows.length === 0
                     ? "Nothing to show with the current filters."
                     : "No rows match your search."}
@@ -445,7 +445,7 @@ export default function SiteConfigMatrix() {
                     return (
                       <div
                         key={row.path}
-                        className={`absolute left-0 top-0 flex border-b border-slate-100 text-xs ${statusStyle(row)}`}
+                        className={`absolute left-0 top-0 flex border-b border-line-soft text-xs ${statusStyle(row)}`}
                         style={{
                           height: virtualRow.size,
                           width: gridWidth,
@@ -453,14 +453,14 @@ export default function SiteConfigMatrix() {
                         }}
                       >
                         <div
-                          className="shrink-0 truncate px-2 py-1.5 font-mono text-[11px] text-slate-600"
+                          className="shrink-0 truncate px-2 py-1.5 font-mono text-[11px] text-ink-2"
                           style={{ width: PATH_COL }}
                           title={row.path}
                         >
                           {row.path}
                         </div>
                         <div
-                          className="shrink-0 truncate px-2 py-1.5 font-semibold text-slate-800"
+                          className="shrink-0 truncate px-2 py-1.5 font-semibold text-ink"
                           style={{ width: NAME_COL }}
                           title={row.name}
                         >
@@ -469,10 +469,10 @@ export default function SiteConfigMatrix() {
                         {row.values.map((value, i) => (
                           <div
                             key={i}
-                            className={`shrink-0 truncate border-l border-slate-100 px-2 py-1.5 ${
+                            className={`shrink-0 truncate border-l border-line-soft px-2 py-1.5 ${
                               value === null
-                                ? "italic text-slate-400"
-                                : "tabular-nums text-slate-800"
+                                ? "italic text-ink-3"
+                                : "tabular-nums text-ink"
                             }`}
                             style={{ width: SITE_COL }}
                             title={value === null ? "not present on this site" : value}
@@ -481,16 +481,16 @@ export default function SiteConfigMatrix() {
                           </div>
                         ))}
                         <div
-                          className="shrink-0 border-l border-slate-100 px-2 py-1.5"
+                          className="shrink-0 border-l border-line-soft px-2 py-1.5"
                           style={{ width: STATUS_COL }}
                         >
                           <span
                             className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                               row.status === "mismatch"
-                                ? "bg-rose-100 text-rose-700"
+                                ? "bg-bad-soft text-bad"
                                 : row.status === "missing"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : "bg-slate-100 text-slate-500"
+                                  ? "bg-warn-soft text-warn"
+                                  : "bg-surface-sunk text-ink-3"
                             }`}
                           >
                             {row.status === "mismatch"
@@ -523,10 +523,10 @@ export default function SiteConfigMatrix() {
             if (e.dataTransfer.files.length > 0) void loadFiles(e.dataTransfer.files);
           }}
           onClick={() => inputRef.current?.click()}
-          className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center text-sm transition ${
+          className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center text-sm transition ${
             isDragging
-              ? "border-primary bg-primary-50 text-primary-700"
-              : "border-slate-300 bg-slate-50 text-slate-500 hover:border-primary-300 hover:bg-white"
+              ? "border-accent bg-accent-soft text-accent-ink"
+              : "border-line bg-surface-sunk text-ink-3 hover:border-accent/50 hover:bg-surface"
           }`}
         >
           Drop more site XML exports here to add columns

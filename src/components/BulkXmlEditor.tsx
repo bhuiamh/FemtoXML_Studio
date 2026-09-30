@@ -172,17 +172,16 @@ export default function BulkXmlEditor() {
   const notFoundCount = results.filter((r) => r.status === "not_found").length;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Bulk XML Editor</h1>
-        <p className="mt-1 text-sm text-slate-600">
+    <div className="flex flex-col gap-4">
+      <div className="rounded-xl border border-line bg-surface px-5 py-4 shadow-card">
+        <p className="text-[13px] leading-relaxed text-ink-2">
           Load an XML file and an Excel file with two columns: <strong>Parameter path</strong> and <strong>Value</strong>.
-          Paths can use dots or slashes (e.g. <code className="rounded bg-slate-200 px-1">Root.Child.Param</code> or <code className="rounded bg-slate-200 px-1">Root/Child/Param</code>).
+          Paths can use dots or slashes (e.g. <code className="rounded bg-line px-1">Root.Child.Param</code> or <code className="rounded bg-line px-1">Root/Child/Param</code>).
         </p>
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-4">
-        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-sunk">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
@@ -196,10 +195,10 @@ export default function BulkXmlEditor() {
           />
         </label>
         {xmlFileName && (
-          <span className="text-sm text-slate-600">XML: {xmlFileName}</span>
+          <span className="text-sm text-ink-2">XML: {xmlFileName}</span>
         )}
 
-        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-sunk">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -213,13 +212,13 @@ export default function BulkXmlEditor() {
           />
         </label>
         {excelFileName && (
-          <span className="text-sm text-slate-600">Excel: {excelFileName}</span>
+          <span className="text-sm text-ink-2">Excel: {excelFileName}</span>
         )}
 
         <button
           onClick={runBulkEdit}
           disabled={!xmlContent.trim() || !excelFile || isProcessing}
-          className="rounded-lg bg-[#2596be] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e7a9a] disabled:bg-slate-300 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-accent to-accent-deep h-9 px-3.5 text-[13px] font-semibold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-line disabled:to-line disabled:text-ink-3"
         >
           {isProcessing ? "Applying…" : "Apply Excel to XML"}
         </button>
@@ -227,7 +226,7 @@ export default function BulkXmlEditor() {
         {editedTree && (
           <button
             onClick={handleDownloadResult}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-sunk"
           >
             Download Edited XML
           </button>
@@ -235,39 +234,39 @@ export default function BulkXmlEditor() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border border-bad/35 bg-bad-soft p-4 text-sm text-bad">
           {error}
         </div>
       )}
 
       {results.length > 0 && (
-        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="mb-2 text-lg font-semibold text-slate-800">Result summary</h2>
-          <p className="text-sm text-slate-600">
-            <span className="font-medium text-green-700">{updatedCount} updated</span>
+        <div className="mb-6 rounded-lg border border-line bg-surface p-4">
+          <h2 className="mb-2 text-lg font-semibold text-ink">Result summary</h2>
+          <p className="text-sm text-ink-2">
+            <span className="font-medium text-ok">{updatedCount} updated</span>
             {notFoundCount > 0 && (
-              <> · <span className="font-medium text-amber-700">{notFoundCount} path(s) not found</span></>
+              <> · <span className="font-medium text-warn">{notFoundCount} path(s) not found</span></>
             )}
           </p>
-          <div className="mt-3 max-h-64 overflow-y-auto rounded border border-slate-100">
+          <div className="mt-3 max-h-64 overflow-y-auto rounded-md border border-line-soft">
             <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 bg-slate-50">
+              <thead className="sticky top-0 bg-surface-sunk">
                 <tr>
-                  <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">Parameter path</th>
-                  <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">Value</th>
-                  <th className="border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">Status</th>
+                  <th className="border-b border-line px-3 py-2 font-semibold text-ink-2">Parameter path</th>
+                  <th className="border-b border-line px-3 py-2 font-semibold text-ink-2">Value</th>
+                  <th className="border-b border-line px-3 py-2 font-semibold text-ink-2">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {results.map((r, i) => (
-                  <tr key={i} className="border-b border-slate-100">
-                    <td className="px-3 py-1.5 font-mono text-slate-800">{r.path}</td>
-                    <td className="px-3 py-1.5 text-slate-700">{r.value}</td>
+                  <tr key={i} className="border-b border-line-soft">
+                    <td className="px-3 py-1.5 font-mono text-ink">{r.path}</td>
+                    <td className="px-3 py-1.5 text-ink-2">{r.value}</td>
                     <td className="px-3 py-1.5">
                       {r.status === "updated" ? (
-                        <span className="text-green-600">Updated</span>
+                        <span className="text-ok">Updated</span>
                       ) : (
-                        <span className="text-amber-600">Not found</span>
+                        <span className="text-warn">Not found</span>
                       )}
                     </td>
                   </tr>
@@ -279,11 +278,11 @@ export default function BulkXmlEditor() {
       )}
 
       {!xmlContent.trim() && (
-        <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-          <p className="text-sm text-slate-600">
+        <div className="rounded-lg border-2 border-dashed border-line bg-surface-sunk p-12 text-center">
+          <p className="text-sm text-ink-2">
             Load an XML file and an Excel file, then click &quot;Apply Excel to XML&quot; to replace values by parameter path.
           </p>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-ink-3">
             Excel: first column = full parameter path (e.g. Root.Section.Param or Root/Section/Param), second column = new value.
           </p>
         </div>

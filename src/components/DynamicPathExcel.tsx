@@ -8,6 +8,7 @@ import {
 } from "../utils/pathTable";
 import { computeCellId, computeEnbId } from "../utils/neighborList";
 import { downloadPathWorkbook } from "../utils/pathTableExcel";
+import { yieldToBrowser } from "../utils/yieldToBrowser";
 
 type LoadedFile = { id: string; file: File; sizeKb: number };
 type ScanError = { fileName: string; message: string };
@@ -91,6 +92,7 @@ export default function DynamicPathExcel() {
 
     for (const item of targetFiles) {
       try {
+        await yieldToBrowser();
         const text = await item.file.text();
         results.push(
           extractPathTable(text, item.file.name, scanPath, {
@@ -201,14 +203,14 @@ export default function DynamicPathExcel() {
     const hasSplit = columns.some((c) => c.kind === "enb");
 
     return (
-      <div className="max-h-96 overflow-auto border-t border-slate-100">
+      <div className="max-h-96 overflow-auto border-t border-line-soft">
         <table className="w-full border-collapse text-left text-xs">
-          <thead className="sticky top-0 bg-slate-100">
+          <thead className="sticky top-0 bg-surface-sunk">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.label}
-                  className="whitespace-nowrap border-b border-slate-200 px-2 py-2 font-semibold text-slate-700"
+                  className="whitespace-nowrap border-b border-line px-2 py-2 font-semibold text-ink-2"
                 >
                   {col.label}
                 </th>
@@ -219,18 +221,18 @@ export default function DynamicPathExcel() {
             {block.rows.map((entry, i) => {
               const cid = hasSplit && cidKey ? (entry.values[cidKey] ?? "") : "";
               return (
-                <tr key={i} className="odd:bg-white even:bg-slate-50">
+                <tr key={i} className="odd:bg-surface even:bg-surface-sunk">
                   {columns.map((col) => (
                     <td
                       key={col.label}
-                      className={`whitespace-nowrap border-b border-slate-100 px-2 py-1.5 ${
+                      className={`whitespace-nowrap border-b border-line-soft px-2 py-1.5 ${
                         col.kind === "enb" || col.kind === "cellId"
-                          ? "font-semibold text-primary-700"
+                          ? "font-semibold text-accent-ink"
                           : col.kind === "index"
-                            ? "text-slate-500"
+                            ? "text-ink-3"
                             : col.kind === "instance"
-                              ? "font-medium text-slate-600"
-                              : "text-slate-800"
+                              ? "font-medium text-ink-2"
+                              : "text-ink"
                       }`}
                     >
                       {col.kind === "index"
@@ -255,24 +257,23 @@ export default function DynamicPathExcel() {
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Dynamic Path Excel</h1>
-        <p className="mt-1 max-w-4xl text-sm text-slate-600">
+      <header className="rounded-xl border border-line bg-surface p-5 shadow-card">
+        <p className="max-w-4xl text-[13px] leading-relaxed text-ink-2">
           Point any TR-069 parameter path at your device XML exports and get the
           same styled workbook the Neighbour module produces — one sheet per
           device, columns discovered from the data. Everything{" "}
           <span className="font-semibold">from the path down to the end</span> is
           exported: the node itself becomes the first table and every nested
           table below it gets its own table on the same sheet. Use{" "}
-          <code className="rounded bg-slate-100 px-1 text-xs">&#123;n&#125;</code>{" "}
-          (or <code className="rounded bg-slate-100 px-1 text-xs">*</code>) for
+          <code className="rounded bg-surface-sunk px-1 text-xs">&#123;n&#125;</code>{" "}
+          (or <code className="rounded bg-surface-sunk px-1 text-xs">*</code>) for
           every instance of an indexed node, or a number like{" "}
-          <code className="rounded bg-slate-100 px-1 text-xs">i2</code> for one
+          <code className="rounded bg-surface-sunk px-1 text-xs">i2</code> for one
           of them. Dots and slashes both work.
         </p>
 
         <div className="mt-4 flex flex-col gap-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <label className="text-xs font-semibold uppercase tracking-wide text-ink-3">
             Parameter path
           </label>
           <div className="flex flex-wrap gap-2">
@@ -284,19 +285,19 @@ export default function DynamicPathExcel() {
               }}
               spellCheck={false}
               placeholder={DEFAULT_PATH}
-              className="min-w-[320px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-200"
+              className="min-w-[320px] flex-1 rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs text-ink shadow-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
             <button
               onClick={() => applyPath(path)}
               disabled={isScanning}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent h-9 px-3.5 text-[13px] font-semibold text-white shadow-sm hover:brightness-110 disabled:cursor-not-allowed disabled:bg-line"
             >
               {isScanning ? "Scanning…" : "Scan path"}
             </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-500">Examples:</span>
+            <span className="text-xs text-ink-3">Examples:</span>
             {PRESETS.map((preset) => (
               <button
                 key={preset.label}
@@ -304,8 +305,8 @@ export default function DynamicPathExcel() {
                 title={preset.path}
                 className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   path === preset.path
-                    ? "border-primary bg-primary-50 text-primary-700"
-                    : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                    ? "border-accent bg-accent-soft text-accent-ink"
+                    : "border-line bg-surface text-ink-2 hover:bg-surface-sunk"
                 }`}
               >
                 {preset.label}
@@ -314,8 +315,8 @@ export default function DynamicPathExcel() {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-100">
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line-soft pt-4">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-accent/30 bg-accent-soft h-9 px-3.5 text-[13px] font-semibold text-accent-ink hover:bg-accent-soft">
             Load device XML files
             <input
               ref={inputRef}
@@ -329,27 +330,27 @@ export default function DynamicPathExcel() {
           {files.length > 0 && (
             <button
               onClick={clearAll}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface h-9 px-3.5 text-[13px] font-semibold text-ink-2 hover:bg-surface-sunk"
             >
               Clear all
             </button>
           )}
           <div className="ml-auto flex flex-wrap items-center gap-4">
-            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-2">
               <input
                 type="checkbox"
                 checked={includeChildTables}
                 onChange={(e) => toggleChildTables(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary-200"
+                className="h-4 w-4 rounded border-line text-accent focus:ring-accent/25"
               />
               Include child tables (whole subtree)
             </label>
-            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-2">
               <input
                 type="checkbox"
                 checked={addCidSplit}
                 onChange={(e) => setAddCidSplit(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary-200"
+                className="h-4 w-4 rounded border-line text-accent focus:ring-accent/25"
               />
               Add eNodeB ID / Cell ID after CID
             </label>
@@ -357,7 +358,7 @@ export default function DynamicPathExcel() {
         </div>
 
         {tables.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-end gap-4 border-t border-slate-100 pt-4">
+          <div className="mt-4 flex flex-wrap items-end gap-4 border-t border-line-soft pt-4">
             <div className="flex flex-wrap gap-3">
               {[
                 { label: "Devices", value: stats.devices },
@@ -367,32 +368,32 @@ export default function DynamicPathExcel() {
               ].map((s) => (
                 <div
                   key={s.label}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2"
+                  className="rounded-xl border border-line bg-surface-sunk px-4 py-2"
                 >
-                  <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <div className="text-xs font-medium uppercase tracking-wide text-ink-3">
                     {s.label}
                   </div>
-                  <div className="text-lg font-semibold text-slate-900">{s.value}</div>
+                  <div className="text-lg font-semibold text-ink">{s.value}</div>
                 </div>
               ))}
             </div>
 
             <div className="flex flex-1 flex-wrap items-end justify-end gap-3">
               <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-slate-500">
+                <span className="text-xs font-medium text-ink-3">
                   Output file name
                 </span>
                 <input
                   value={outputName}
                   onChange={(e) => setOutputName(e.target.value)}
                   spellCheck={false}
-                  className="w-56 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-200"
+                  className="w-56 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
               </label>
               <button
                 onClick={handleDownload}
                 disabled={isBuilding || stats.rows === 0}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-ok h-9 px-3.5 text-[13px] font-semibold text-white shadow-sm hover:brightness-110 disabled:cursor-not-allowed disabled:bg-line"
               >
                 {isBuilding ? "Building…" : "Download Excel"}
               </button>
@@ -410,23 +411,23 @@ export default function DynamicPathExcel() {
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className={`cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center transition ${
+          className={`cursor-pointer rounded-xl border-2 border-dashed p-12 text-center transition ${
             isDragging
-              ? "border-primary bg-primary-50"
-              : "border-slate-300 bg-slate-50 hover:border-primary-300 hover:bg-white"
+              ? "border-accent bg-accent-soft"
+              : "border-line bg-surface-sunk hover:border-accent/50 hover:bg-surface"
           }`}
         >
-          <p className="text-sm font-semibold text-slate-700">
+          <p className="text-sm font-semibold text-ink-2">
             Drop device XML exports here, or click to browse
           </p>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-ink-3">
             The path above is applied to every file as soon as it loads.
           </p>
         </div>
       )}
 
       {(pathError || buildError || errors.length > 0) && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+        <div className="rounded-xl border border-bad/35 bg-bad-soft p-4 text-sm text-bad">
           {pathError && <p className="font-semibold">{pathError}</p>}
           {buildError && <p className="font-semibold">{buildError}</p>}
           {!pathError &&
@@ -444,18 +445,18 @@ export default function DynamicPathExcel() {
         return (
           <section
             key={table.sourceFile}
-            className="rounded-2xl border border-slate-200 bg-white shadow-sm"
+            className="rounded-xl border border-line bg-surface shadow-card"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft p-4">
               <div>
-                <h2 className="text-base font-semibold text-slate-900">
+                <h2 className="text-base font-semibold text-ink">
                   Site {table.siteId}
-                  <span className="ml-2 text-sm font-normal text-slate-500">
+                  <span className="ml-2 text-sm font-normal text-ink-3">
                     {table.serial ? `serial ${table.serial}` : "serial n/a"}
                   </span>
                 </h2>
                 <p
-                  className="mt-0.5 max-w-2xl truncate text-xs text-slate-500"
+                  className="mt-0.5 max-w-2xl truncate text-xs text-ink-3"
                   title={table.sourceFile}
                 >
                   {table.sourceFile}
@@ -467,7 +468,7 @@ export default function DynamicPathExcel() {
               {fileEntry && (
                 <button
                   onClick={() => removeFile(fileEntry.id)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface h-8 px-3 text-xs font-semibold text-ink-2 hover:bg-surface-sunk"
                 >
                   Remove
                 </button>
@@ -475,15 +476,15 @@ export default function DynamicPathExcel() {
             </div>
 
             {table.blocks.length === 0 && (
-              <p className="px-4 py-3 text-sm text-amber-700">
+              <p className="px-4 py-3 text-sm text-warn">
                 This path does not resolve to anything in this export. Check the
                 tag names and whether an indexed node needs{" "}
-                <code className="rounded bg-amber-100 px-1">&#123;n&#125;</code>.
+                <code className="rounded bg-warn-soft px-1">&#123;n&#125;</code>.
               </p>
             )}
 
             {(table.skippedTables.length > 0 || table.hitCellLimit) && (
-              <p className="border-b border-slate-100 bg-amber-50 px-4 py-2 text-xs text-amber-800">
+              <p className="border-b border-line-soft bg-warn-soft px-4 py-2 text-xs text-warn">
                 {table.hitCellLimit &&
                   "Export limit reached — narrow the path to get the full subtree. "}
                 {table.skippedTables.length > 0 &&
@@ -495,7 +496,7 @@ export default function DynamicPathExcel() {
               </p>
             )}
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-line-soft">
               {table.blocks.map((block) => {
                 const key = `${table.sourceFile}::${block.relPath}`;
                 const isOpen = expanded === key;
@@ -504,11 +505,11 @@ export default function DynamicPathExcel() {
                     <button
                       onClick={() => setExpanded(isOpen ? null : key)}
                       disabled={block.rows.length === 0}
-                      className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50 disabled:cursor-default disabled:hover:bg-white"
+                      className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-surface-sunk disabled:cursor-default disabled:hover:bg-surface"
                     >
                       <span
                         className={`font-mono text-xs ${
-                          block.relPath ? "text-slate-600" : "font-semibold text-slate-900"
+                          block.relPath ? "text-ink-2" : "font-semibold text-ink"
                         }`}
                       >
                         {block.relPath ? `↳ ${block.relPath}` : block.title}
@@ -517,14 +518,14 @@ export default function DynamicPathExcel() {
                         <span
                           className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                             block.rows.length > 0
-                              ? "bg-primary-50 text-primary-700"
-                              : "bg-slate-100 text-slate-500"
+                              ? "bg-accent-soft text-accent-ink"
+                              : "bg-surface-sunk text-ink-3"
                           }`}
                         >
                           {block.rows.length} × {block.columns.length}
                         </span>
                         {block.rows.length > 0 && (
-                          <span className="text-xs font-semibold text-primary">
+                          <span className="text-xs font-semibold text-accent">
                             {isOpen ? "Hide" : "Preview"}
                           </span>
                         )}
@@ -548,10 +549,10 @@ export default function DynamicPathExcel() {
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center text-sm transition ${
+          className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center text-sm transition ${
             isDragging
-              ? "border-primary bg-primary-50 text-primary-700"
-              : "border-slate-300 bg-slate-50 text-slate-500 hover:border-primary-300 hover:bg-white"
+              ? "border-accent bg-accent-soft text-accent-ink"
+              : "border-line bg-surface-sunk text-ink-3 hover:border-accent/50 hover:bg-surface"
           }`}
         >
           Drop more XML exports here to add devices
