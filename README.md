@@ -78,6 +78,15 @@ A robust, high-performance web application for comparing and editing large-scale
 - **Snapshot comparison**: loading the same site from different dates is supported — the column label picks up the date from the file name
 - **Scales to real exports**: ~25,000 parameters per device, virtualised preview with live search over path and value
 
+### Sign-in
+- **Gated interface**: the app opens on a sign-in screen; the session is remembered (or kept to the tab if "Keep me signed in" is off) and can be ended from the rail
+- **Hashed credential**: the password is compared as a SHA-256 hash, so no plaintext credential exists in the source, the repository or the built bundle
+- **Configurable**: override with `VITE_AUTH_USER` and `VITE_AUTH_PASS_SHA256` — copy `.env.example` to `.env.local` (git-ignored). Generate a hash with
+  ```bash
+  node -e "console.log(require('crypto').createHash('sha256').update('YOUR PASSWORD').digest('hex'))"
+  ```
+- **What it is not**: this is a browser-only app with no server, so the check runs client-side. It keeps casual visitors out of a shared instance; it is not a security boundary, and anyone with devtools can bypass it. Device XML you load never leaves the machine.
+
 ## 📋 Prerequisites
 
 - Node.js 18.0.0 or higher
@@ -249,11 +258,19 @@ Sheet layout: title, serial/source subtitle, then one blue bar per table followe
 
 Columns: `Parameter Path` · `Parameter` · one column per site · `Status` · `Distinct` · `Sites With Value`.
 
-## 🎨 Color Scheme
+## 🎨 Design System
 
-The application uses a professional color palette:
-- **Primary Color**: `#2596be` (Teal Blue)
-- **Accent Colors**: Custom shades of the primary color for highlights and interactions
+One token system drives every screen, so a theme change is a single attribute
+on `<html>` rather than a rewrite in each component.
+
+- **Themes**: light and dark, switched from the navigation rail and remembered; "System" follows the OS. The theme is applied before the first paint, so there is no flash of the wrong one
+- **Tokens**: semantic CSS variables (`--surface`, `--ink`, `--accent`, `--bad`…) mapped into Tailwind as `bg-surface`, `text-ink-3`, `border-line` and so on. No component holds a literal colour
+- **Palette**: the `#2596be` blue as the accent, neutrals biased toward it so greys read as chosen; severity (mismatch / missing / match) is deliberately separate from the accent so "needs attention" never looks like "this is a button"
+- **Contrast**: verified against WCAG AA in both themes — body text 15.6:1 light and 16.4:1 dark, muted text 4.6:1 and 5.1:1
+- **Shell**: fixed left navigation rail, collapsible to icons, a drawer below 768px, and a slim top bar naming the current module
+- **Typography**: IBM Plex Sans and IBM Plex Mono, with a full system fallback so the app still reads correctly where the webfont request cannot complete. Data views use `tabular-nums`
+- **Icons**: [lucide-react](https://lucide.dev), one weight and grid throughout
+- **Loading**: a branded loader with three variants (signal bloom, radar sweep, spectrum bars) — switch the whole app by changing `DEFAULT_LOADER` in `src/components/ui/Loader.tsx`. Parse loops yield a frame between files so it animates rather than freezing, and motion respects `prefers-reduced-motion`
 
 ## 🏗️ Technical Architecture
 
@@ -282,7 +299,10 @@ xml-comparison/
 │   │   ├── XmlEditor.tsx      # XML Editor component
 │   │   ├── NeighborListExcel.tsx  # Neighbour Excel module
 │   │   ├── DynamicPathExcel.tsx   # Dynamic Path Excel module
-│   │   └── SiteConfigMatrix.tsx   # Site Configuration Matrix module
+│   │   ├── SiteConfigMatrix.tsx   # Site Configuration Matrix module
+│   │   ├── AppShell.tsx       # Left rail, top bar, theme switch
+│   │   ├── LoginScreen.tsx    # Sign-in gate
+│   │   └── ui/                # Shared primitives and loaders
 │   ├── utils/
 │   │   ├── export.ts          # CSV/Excel export utilities
 │   │   ├── excelCommon.ts     # Shared workbook styling helpers
