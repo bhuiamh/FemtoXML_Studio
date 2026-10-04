@@ -5,6 +5,8 @@ import {
   columnValue,
   deviceNeighborRows,
   extractNeighborSite,
+  allNeighborEarfcns,
+  neighborEarfcnCounts,
   totalNeighbors,
   type NeighborSite,
 } from "../utils/neighborList";
@@ -22,6 +24,21 @@ type LoadError = { fileName: string; message: string };
 
 const DEFAULT_FILE_NAME = "Femtocell_Neighbor_List.xlsx";
 
+/**
+ * Chip colours for the per-EARFCN counts, matching the column shades the
+ * Overview sheet uses so the screen and the workbook read the same.
+ */
+const EARFCN_CHIP = [
+  { ink: "#2E75B6", bg: "#DDEBF7" },
+  { ink: "#C55A11", bg: "#FCE4D6" },
+  { ink: "#548235", bg: "#E2EFDA" },
+  { ink: "#BF8F00", bg: "#FFF2CC" },
+  { ink: "#7030A0", bg: "#EAE1F2" },
+  { ink: "#1F7A7A", bg: "#D9F0F0" },
+  { ink: "#9E3B3B", bg: "#F5DEDE" },
+  { ink: "#305496", bg: "#D9E1F2" },
+];
+
 function formatCell(value: string | number | "" | undefined) {
   if (value === undefined || value === "") return "—";
   return String(value);
@@ -37,6 +54,13 @@ export default function NeighborListExcel() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /** Carrier order shared with the workbook, so a colour means the same thing
+      on screen as it does in the Overview sheet. */
+  const earfcnOrder = useMemo(
+    () => allNeighborEarfcns(loaded.map((item) => item.site)),
+    [loaded],
+  );
 
   const stats = useMemo(() => {
     let cells = 0;
@@ -408,9 +432,34 @@ export default function NeighborListExcel() {
                     onClick={() => setExpanded(isOpen ? null : item.id)}
                     className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-surface-sunk"
                   >
-                    <span className="text-sm font-semibold text-ink">
-                      Neighbour list — {rows.length} row
-                      {rows.length === 1 ? "" : "s"} for this device
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-ink">
+                        Neighbour list — {rows.length} row
+                        {rows.length === 1 ? "" : "s"} for this device
+                      </span>
+                      {/* Same split the Overview sheet tints, so the export
+                          holds no surprises. */}
+                      {[...neighborEarfcnCounts(site).entries()]
+                        .sort((a, b) => Number(a[0]) - Number(b[0]))
+                        .map(([earfcn, count]) => {
+                          const i = Math.max(0, earfcnOrder.indexOf(earfcn));
+                          return (
+                          <span
+                            key={earfcn}
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ring-1 ring-inset"
+                            style={{
+                              color: EARFCN_CHIP[i % EARFCN_CHIP.length].ink,
+                              backgroundColor: EARFCN_CHIP[i % EARFCN_CHIP.length].bg,
+                              boxShadow: `inset 0 0 0 1px ${EARFCN_CHIP[i % EARFCN_CHIP.length].ink}33`,
+                            }}
+                            title={`${count} neighbour(s) on EARFCN ${earfcn}`}
+                          >
+                            {earfcn}
+                            <span className="opacity-70">·</span>
+                            {count}
+                          </span>
+                          );
+                        })}
                     </span>
                     <span className="text-xs font-semibold text-accent">
                       {isOpen ? "Hide" : "Preview"}

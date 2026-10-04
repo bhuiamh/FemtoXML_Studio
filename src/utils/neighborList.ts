@@ -106,6 +106,38 @@ export function totalNeighbors(site: NeighborSite): number {
   return site.cells.reduce((sum, c) => sum + c.neighbors.length, 0);
 }
 
+/**
+ * How many neighbours this device lists on each EARFCN, keyed by the EARFCN as
+ * written in the export. A dual-band device counts both of its cells together,
+ * matching the single neighbour table the sheet produces.
+ */
+export function neighborEarfcnCounts(site: NeighborSite): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const cell of site.cells) {
+    for (const neighbor of cell.neighbors) {
+      const earfcn = neighbor.EUTRACarrierARFCN;
+      if (earfcn === undefined || earfcn === "") continue;
+      const key = String(earfcn);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
+/** Every neighbour EARFCN across the loaded devices, numerically ascending. */
+export function allNeighborEarfcns(sites: NeighborSite[]): string[] {
+  const seen = new Set<string>();
+  for (const site of sites) {
+    for (const key of neighborEarfcnCounts(site).keys()) seen.add(key);
+  }
+  return Array.from(seen).sort((a, b) => {
+    const na = Number(a);
+    const nb = Number(b);
+    if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+    return a.localeCompare(b);
+  });
+}
+
 /** Short band label used inside the neighbour table ("Band 1", "Band 3"). */
 export function shortBandLabel(band: CellValue): string {
   return String(band) !== "" ? `Band ${band}` : "Unknown";
