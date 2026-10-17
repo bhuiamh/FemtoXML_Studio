@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>FemtoXML Studio</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2596be"/>
+      <stop offset="1" stop-color="#14648a"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <!-- Angle brackets around a slash: XML, cut by a signal. Strokes are heavy
+       so the mark still reads at 16px in a browser tab. -->
+  <g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 18 12 32l10 14"/>
+    <path d="M42 18l10 14-10 14"/>
+    <path d="M35.5 17 28.5 47"/>
+  </g>
+</svg>
