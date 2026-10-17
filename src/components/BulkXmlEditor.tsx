@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { xml2js, js2xml } from "xml-js";
 import * as XLSX from "xlsx";
+import { LoadingOverlay } from "./ui";
 import {
   type EditableNode,
   buildEditableTree,
@@ -173,6 +174,16 @@ export default function BulkXmlEditor() {
 
   return (
     <div className="flex flex-col gap-4">
+      <LoadingOverlay
+        state={
+          isProcessing
+            ? {
+                title: "Applying the change list",
+                detail: xmlFileName ?? undefined,
+              }
+            : null
+        }
+      />
       <div className="rounded-xl border border-line bg-surface px-5 py-4 shadow-card">
         <p className="text-[13px] leading-relaxed text-ink-2">
           Load an XML file and an Excel file with two columns: <strong>Parameter path</strong> and <strong>Value</strong>.

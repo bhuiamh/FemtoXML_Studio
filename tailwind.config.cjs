@@ -32,6 +32,7 @@ module.exports = {
       colors: {
         // Page and panels
         ground: token('--ground'),
+        scrim: token('--scrim'),
         'ground-tint': token('--ground-tint'),
         surface: token('--surface'),
         'surface-sunk': token('--surface-sunk'),

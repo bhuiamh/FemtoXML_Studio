@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Diff } from "../workers/xmlDiffWorker";
 import { exportToCSV, exportToExcel } from "../utils/export";
-import { Loader, Spinner } from "./ui";
+import { Loader, LoadingOverlay, Spinner } from "./ui";
 
 type ChangeKind = "added" | "removed" | "changed";
 type Stats = Record<ChangeKind, number>;
@@ -342,6 +342,17 @@ export function XmlComparison() {
 
   return (
     <>
+      <LoadingOverlay
+        state={
+          isComparing
+            ? {
+                title: progress?.message ?? "Comparing the two exports",
+                detail: `${leftFileName ?? "Left XML"} ↔ ${rightFileName ?? "Right XML"}`,
+                percent: progress?.percent,
+              }
+            : null
+        }
+      />
       {/* Header with Compare button and search - only for comparison view */}
       <header className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5 shadow-card sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -387,32 +398,6 @@ export function XmlComparison() {
       </header>
 
       {/* Progress indicator shown while comparing XMLs */}
-      {isComparing && progress && (
-        <div className="rounded-xl border border-line bg-surface p-4 shadow-card">
-          <div className="flex items-center gap-3">
-            <Loader size="sm" />
-            <div className="flex w-full flex-col gap-1">
-              <div className="flex items-baseline justify-between gap-3">
-                <div className="text-sm font-semibold text-ink">
-                  {progress.message ?? "Comparing…"}
-                </div>
-                <div className="text-sm font-semibold text-ink-2">
-                  {progress.percent}%
-                </div>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-surface-sunk">
-                <div
-                  className="h-full rounded-full bg-accent transition-[width]"
-                  style={{
-                    width: `${Math.min(100, Math.max(0, progress.percent))}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Left and Right XML input panels */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-line bg-surface p-4 shadow-card">

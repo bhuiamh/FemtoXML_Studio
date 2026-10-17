@@ -9,6 +9,7 @@ import {
 import { computeCellId, computeEnbId } from "../utils/neighborList";
 import { downloadPathWorkbook } from "../utils/pathTableExcel";
 import { yieldToBrowser } from "../utils/yieldToBrowser";
+import { LoadingOverlay, type LoadingState } from "./ui";
 
 type LoadedFile = { id: string; file: File; sizeKb: number };
 type ScanError = { fileName: string; message: string };
@@ -64,6 +65,7 @@ export default function DynamicPathExcel() {
   const [buildError, setBuildError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [loading, setLoading] = useState<LoadingState | null>(null);
   const [addCidSplit, setAddCidSplit] = useState(true);
   const [includeChildTables, setIncludeChildTables] = useState(true);
   const [outputName, setOutputName] = useState("");
@@ -90,8 +92,13 @@ export default function DynamicPathExcel() {
     const results: PathTableResult[] = [];
     const failed: ScanError[] = [];
 
-    for (const item of targetFiles) {
+    for (const [index, item] of targetFiles.entries()) {
       try {
+        setLoading({
+          title: "Scanning the path",
+          detail: `File ${index + 1} of ${targetFiles.length} · ${item.file.name}`,
+          percent: (index / targetFiles.length) * 100,
+        });
         await yieldToBrowser();
         const text = await item.file.text();
         results.push(
@@ -110,6 +117,7 @@ export default function DynamicPathExcel() {
     setTables(results);
     setErrors(failed);
     setOutputName((prev) => prev || (results.length > 0 ? suggestFileName(results) : ""));
+    setLoading(null);
     setIsScanning(false);
   };
 
@@ -183,6 +191,11 @@ export default function DynamicPathExcel() {
     if (tables.length === 0) return;
     setIsBuilding(true);
     setBuildError(null);
+    setLoading({
+      title: "Building the workbook",
+      detail: `${tables.length} device sheet${tables.length === 1 ? "" : "s"}`,
+    });
+    await yieldToBrowser();
     try {
       await downloadPathWorkbook(tables, outputName || suggestFileName(tables), {
         addCidSplit,
@@ -190,6 +203,7 @@ export default function DynamicPathExcel() {
     } catch (err) {
       setBuildError(`Failed to build the workbook: ${(err as Error).message}`);
     }
+    setLoading(null);
     setIsBuilding(false);
   };
 
@@ -257,6 +271,7 @@ export default function DynamicPathExcel() {
 
   return (
     <div className="flex flex-col gap-5">
+      <LoadingOverlay state={loading} />
       <header className="rounded-xl border border-line bg-surface p-5 shadow-card">
         <p className="max-w-4xl text-[13px] leading-relaxed text-ink-2">
           Point any TR-069 parameter path at your device XML exports and get the

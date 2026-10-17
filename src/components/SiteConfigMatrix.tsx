@@ -8,7 +8,7 @@ import {
   type SiteDoc,
 } from "../utils/siteMatrix";
 import { downloadMatrixCsv, downloadMatrixWorkbook } from "../utils/siteMatrixExport";
-import { LoadingPanel } from "./ui";
+import { LoadingOverlay, type LoadingState } from "./ui";
 import { yieldToBrowser } from "../utils/yieldToBrowser";
 
 type LoadedSite = { id: string; doc: SiteDoc; sizeKb: number };
@@ -27,6 +27,7 @@ export default function SiteConfigMatrix() {
   const [errors, setErrors] = useState<LoadError[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState<"csv" | "xlsx" | null>(null);
+  const [loading, setLoading] = useState<LoadingState | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [hideVolatile, setHideVolatile] = useState(true);
   const [mismatchesOnly, setMismatchesOnly] = useState(false);
@@ -82,8 +83,14 @@ export default function SiteConfigMatrix() {
     const added: LoadedSite[] = [];
     const failed: LoadError[] = [];
 
-    for (const file of files) {
+    for (const [index, file] of files.entries()) {
       try {
+        setLoading({
+          title: "Reading site exports",
+          detail: `File ${index + 1} of ${files.length} · ${file.name}`,
+          percent: (index / files.length) * 100,
+        });
+        // Paint the step before the synchronous parse takes the thread.
         await yieldToBrowser();
         const text = await file.text();
         added.push({
@@ -107,6 +114,7 @@ export default function SiteConfigMatrix() {
       return Array.from(byName.values());
     });
     setErrors(failed);
+    setLoading(null);
     setIsLoading(false);
   };
 
@@ -123,12 +131,18 @@ export default function SiteConfigMatrix() {
     if (matrix.rows.length === 0) return;
     setIsExporting(kind);
     setExportError(null);
+    setLoading({
+      title: kind === "csv" ? "Writing the CSV" : "Building the workbook",
+      detail: `${matrix.rows.length.toLocaleString()} rows × ${matrix.sites.length} site${matrix.sites.length === 1 ? "" : "s"}`,
+    });
+    await yieldToBrowser();
     try {
       if (kind === "csv") downloadMatrixCsv(matrix, outputName || DEFAULT_FILE_NAME);
       else await downloadMatrixWorkbook(matrix, outputName || DEFAULT_FILE_NAME);
     } catch (err) {
       setExportError(`Export failed: ${(err as Error).message}`);
     }
+    setLoading(null);
     setIsExporting(null);
   };
 
@@ -141,6 +155,7 @@ export default function SiteConfigMatrix() {
 
   return (
     <div className="flex flex-col gap-5">
+      <LoadingOverlay state={loading} />
       <header className="rounded-xl border border-line bg-surface p-5 shadow-card">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -317,15 +332,6 @@ export default function SiteConfigMatrix() {
           </>
         )}
       </header>
-
-      {isLoading && (
-        <div className="rounded-xl border border-line bg-surface shadow-card">
-          <LoadingPanel
-            title="Reading site exports"
-            detail="Collecting every parameter from each device"
-          />
-        </div>
-      )}
 
       {(errors.length > 0 || exportError) && (
         <div className="rounded-xl border border-bad/35 bg-bad-soft p-4 text-sm text-bad">

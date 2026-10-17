@@ -5,6 +5,7 @@ import {
   buildEditableTree,
   buildXmlFromEditable,
 } from "../utils/xmlTree";
+import { LoadingOverlay } from "./ui";
 
 type XmlEditorProps = {
   onNavigateToComparison?: () => void;
@@ -534,6 +535,13 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
   
   return (
     <div className="flex flex-col gap-4">
+      <LoadingOverlay
+        state={
+          isLoading
+            ? { title: "Reading XML file", detail: fileName ?? undefined }
+            : null
+        }
+      />
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-5 py-4 shadow-card">
         <div>
           <p className="text-[13px] leading-relaxed text-ink-2">
@@ -665,12 +673,6 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
           </label>
         </div>
       </div>
-
-      {isLoading && (
-        <div className="mb-4 rounded-lg bg-accent-soft p-4 text-center text-sm text-accent-ink">
-          Loading XML file...
-        </div>
-      )}
 
       {fileName && !isLoading && (
         <div className="mb-4 rounded-lg bg-surface-sunk px-4 py-2 text-sm text-ink-2">

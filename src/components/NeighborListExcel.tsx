@@ -11,7 +11,7 @@ import {
   type NeighborSite,
 } from "../utils/neighborList";
 import { downloadNeighborWorkbook } from "../utils/neighborExcel";
-import { LoadingPanel, Spinner } from "./ui";
+import { LoadingOverlay, Spinner, type LoadingState } from "./ui";
 import { yieldToBrowser } from "../utils/yieldToBrowser";
 
 type LoadedSite = {
@@ -49,6 +49,7 @@ export default function NeighborListExcel() {
   const [errors, setErrors] = useState<LoadError[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [loading, setLoading] = useState<LoadingState | null>(null);
   const [buildError, setBuildError] = useState<string | null>(null);
   const [outputName, setOutputName] = useState(DEFAULT_FILE_NAME);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -89,8 +90,14 @@ export default function NeighborListExcel() {
     const added: LoadedSite[] = [];
     const failed: LoadError[] = [];
 
-    for (const file of files) {
+    for (const [index, file] of files.entries()) {
       try {
+        setLoading({
+          title: "Reading device exports",
+          detail: `File ${index + 1} of ${files.length} · ${file.name}`,
+          percent: (index / files.length) * 100,
+        });
+        // Let the overlay paint the step before the synchronous parse begins.
         await yieldToBrowser();
         const text = await file.text();
         const site = extractNeighborSite(text, file.name);
@@ -118,6 +125,7 @@ export default function NeighborListExcel() {
       return Array.from(byName.values());
     });
     setErrors(failed);
+    setLoading(null);
     setIsLoading(false);
   };
 
@@ -151,6 +159,13 @@ export default function NeighborListExcel() {
     if (loaded.length === 0) return;
     setIsBuilding(true);
     setBuildError(null);
+    setLoading({
+      title: "Building the workbook",
+      detail: `${loaded.length} device sheet${loaded.length === 1 ? "" : "s"} plus the overview`,
+    });
+    // ExcelJS runs on this thread, so the overlay needs a frame to appear
+    // before the build starts.
+    await yieldToBrowser();
     try {
       await downloadNeighborWorkbook(
         loaded.map((item) => item.site),
@@ -159,11 +174,13 @@ export default function NeighborListExcel() {
     } catch (err) {
       setBuildError(`Failed to build the workbook: ${(err as Error).message}`);
     }
+    setLoading(null);
     setIsBuilding(false);
   };
 
   return (
     <div className="flex flex-col gap-5">
+      <LoadingOverlay state={loading} />
       <header className="rounded-xl border border-line bg-surface p-5 shadow-card">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -312,15 +329,6 @@ export default function NeighborListExcel() {
             </code>{" "}
             give each sheet its site ID and serial number automatically.
           </p>
-        </div>
-      )}
-
-      {isLoading && (
-        <div className="rounded-xl border border-line bg-surface shadow-card">
-          <LoadingPanel
-            title="Reading device exports"
-            detail="Parsing the parameter tree of each file"
-          />
         </div>
       )}
 

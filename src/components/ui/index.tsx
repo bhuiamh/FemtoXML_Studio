@@ -19,6 +19,7 @@ import { cx } from "./cx";
 import { Spinner } from "./Loader";
 
 export { cx } from "./cx";
+export { LoadingOverlay, type LoadingState } from "./LoadingOverlay";
 export {
   Loader,
   LoadingPanel,
