@@ -72,13 +72,78 @@ export function bandLabel(band: CellValue): string {
 }
 
 /** Parse "<serial>_<siteId>_<date>_<rest>.xml" out of a file name. */
-export function parseFileName(fileName: string): { serial: string; siteId: string } {
-  const base = fileName.replace(/\.[^.]*$/, "");
-  const parts = base.split("_");
-  if (parts.length >= 3) {
-    return { serial: parts[0], siteId: parts[1] };
+/**
+ * Site IDs are six characters: four letters, a digit, a letter — DHPH5F,
+ * CGGE1F, RSBH1F. That shape picks the site out of a file name whatever else
+ * is in it, which matters because exports come in more than one layout:
+ *
+ *   00101000009_DHPH5F_20260930.xml
+ *   00101000137_e04cb2e05158aca653d943fb4715fb49_CGGE1F_20261017_105854_MANUAL.xml
+ *
+ * Taking "the second segment" only works for the first of those.
+ */
+const SITE_ID_SHAPE = /^[A-Za-z]{4}\d[A-Za-z]$/;
+
+/** Looser net: six characters mixing letters and digits, not a bare number. */
+const SITE_ID_LOOSE = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{6}$/;
+
+/** Site ID from a file name, or null when nothing in it looks like one. */
+export function siteIdFromFileName(fileName: string): string | null {
+  const parts = fileName.replace(/\.[^.]*$/, "").split(/[_\s-]+/).filter(Boolean);
+  const exact = parts.find((part) => SITE_ID_SHAPE.test(part));
+  if (exact) return exact.toUpperCase();
+  const loose = parts.find((part) => SITE_ID_LOOSE.test(part));
+  return loose ? loose.toUpperCase() : null;
+}
+
+/** Serial number from a file name: the leading all-digit segment. */
+export function serialFromFileName(fileName: string): string {
+  const first = fileName.replace(/\.[^.]*$/, "").split("_")[0] ?? "";
+  return /^\d+$/.test(first) ? first : "";
+}
+
+/**
+ * Site ID from the device itself:
+ * Device.Services.FAPService.{n}.AccessMgmt.LTE.HNBName, first six characters
+ * ("CGGE1FL21G" -> "CGGE1F").
+ *
+ * The LTE branch specifically — an export also carries a UMTS HNBName, which
+ * holds something else entirely ("NYBSYS2L18G").
+ */
+export function siteIdFromHnbName(device: Element | null): string | null {
+  if (!device) return null;
+  const services = childByTag(device, "Services");
+  for (const fapContainer of childrenByTag(services, "FAPService")) {
+    for (const { el: inst } of indexedEntries(fapContainer)) {
+      const name = textOf(descend(inst, "AccessMgmt", "LTE"), "HNBName");
+      if (name) return name.slice(0, 6).toUpperCase();
+    }
   }
-  return { serial: "", siteId: base };
+  return null;
+}
+
+/**
+ * Where a site's identity comes from: the file name first, falling back to the
+ * device's own HNBName, and finally to the file name as written.
+ */
+export function resolveSiteMeta(
+  fileName: string,
+  device: Element | null,
+): { serial: string; siteId: string } {
+  const serial = serialFromFileName(fileName);
+  const siteId =
+    siteIdFromFileName(fileName) ??
+    siteIdFromHnbName(device) ??
+    fileName.replace(/\.[^.]*$/, "");
+  return { serial, siteId };
+}
+
+/** File-name-only resolution, for callers without the parsed document. */
+export function parseFileName(fileName: string): { serial: string; siteId: string } {
+  return {
+    serial: serialFromFileName(fileName),
+    siteId: siteIdFromFileName(fileName) ?? fileName.replace(/\.[^.]*$/, ""),
+  };
 }
 
 /** Coerce a raw XML text value to a number when it looks numeric, else keep the string. */
@@ -369,6 +434,6 @@ export function extractNeighborSite(xmlText: string, fileName: string): Neighbor
     }
   }
 
-  const { serial, siteId } = parseFileName(fileName);
+  const { serial, siteId } = resolveSiteMeta(fileName, device);
   return { siteId, serial, sourceFile: fileName, cells };
 }

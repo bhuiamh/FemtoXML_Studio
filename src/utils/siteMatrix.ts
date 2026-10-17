@@ -8,7 +8,7 @@
  * The transpose (sites as rows) is not possible at this scale: a single export
  * carries ~25,000 leaf parameters and Excel stops at 16,384 columns.
  */
-import { parseFileName } from "./neighborList";
+import { resolveSiteMeta } from "./neighborList";
 
 /** One parsed device export: its parameters in document order. */
 export type SiteDoc = {
@@ -172,7 +172,9 @@ export function extractSiteDoc(xmlText: string, fileName: string): SiteDoc {
   if (!root) throw new Error("Empty XML document.");
 
   const { values, order } = collectParameters(root);
-  const { serial, siteId } = parseFileName(fileName);
+  const device =
+    root.nodeName === "Device" ? root : doc.getElementsByTagName("Device")[0] ?? null;
+  const { serial, siteId } = resolveSiteMeta(fileName, device);
 
   return { siteId, serial, sourceFile: fileName, label: siteId, values, order };
 }

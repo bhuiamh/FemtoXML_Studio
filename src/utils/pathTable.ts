@@ -17,7 +17,7 @@
  * relative to the queried node. Plain parameter groups are not separate tables:
  * their leaves are flattened into dotted columns (`Common.CellIdentity`).
  */
-import { coerceValue, parseFileName, type CellValue } from "./neighborList";
+import { coerceValue, resolveSiteMeta, type CellValue } from "./neighborList";
 
 /** Hard stops so a badly aimed path can't produce an unusable sheet. */
 export const MAX_COLUMNS = 2000;
@@ -399,7 +399,7 @@ export function extractPathTable(
     }
   }
 
-  const { serial, siteId } = parseFileName(fileName);
+  const { serial, siteId } = resolveSiteMeta(fileName, device);
 
   return {
     siteId,
