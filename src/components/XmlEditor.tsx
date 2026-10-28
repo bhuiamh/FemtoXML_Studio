@@ -46,6 +46,17 @@ function findParentNodes(
   return null;
 }
 
+/**
+ * Node ids are full paths ("Device[1].Services[1].FAPService[1]"), so a node is
+ * an ancestor of the target exactly when the target's id starts with its own
+ * id plus a separator. Branches that fail this test are returned untouched,
+ * which is what lets an edit share almost all of the previous tree instead of
+ * rebuilding 26,000 nodes.
+ */
+function containsTarget(nodeId: string, targetId: string): boolean {
+  return targetId.startsWith(nodeId + ".");
+}
+
 function regenerateIds(
   nodes: EditableNode[],
   parentPath: string = "",
@@ -96,7 +107,10 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
 
     // Remove any history after current index (when new action after undo)
     const newHistory = history.slice(0, index + 1);
-    newHistory.push(newTree.map(deepCloneNode));
+    // The tree is rebuilt immutably on every edit and nothing mutates a node in
+    // place, so a snapshot can hold the trees themselves. Deep-cloning here
+    // cost ~2.3 MB per state on a 2 MB export — ~113 MB once 50 states filled.
+    newHistory.push(newTree);
 
     // Limit history size to 50 states
     if (newHistory.length > 50) {
@@ -116,7 +130,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
 
     if (index > 0) {
       historyIndexRef.current = index - 1;
-      setTree(history[index - 1].map(deepCloneNode));
+      setTree(history[index - 1]);
       setCanUndo(historyIndexRef.current > 0);
       setCanRedo(true);
     }
@@ -128,7 +142,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
 
     if (index < history.length - 1) {
       historyIndexRef.current = index + 1;
-      setTree(history[index + 1].map(deepCloneNode));
+      setTree(history[index + 1]);
       setCanUndo(true);
       setCanRedo(historyIndexRef.current < history.length - 1);
     }
@@ -212,6 +226,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
         if (node.id === id) {
           return { ...node, value };
         }
+        if (!containsTarget(node.id, id)) return node;
         return { ...node, children: update(node.children) };
       });
     };
@@ -236,6 +251,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
           }
           return { ...node, attributes: newAttrs };
         }
+        if (!containsTarget(node.id, id)) return node;
         return { ...node, children: update(node.children) };
       });
     };
@@ -248,7 +264,11 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
     const remove = (nodes: EditableNode[]): EditableNode[] => {
       return nodes
         .filter((node) => node.id !== id)
-        .map((node) => ({ ...node, children: remove(node.children) }));
+        .map((node) =>
+          containsTarget(node.id, id)
+            ? { ...node, children: remove(node.children) }
+            : node,
+        );
     };
     const newTree = remove(tree);
     setTree(newTree);
@@ -260,8 +280,12 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
     if (!sourceNode) return;
 
     // Find parent nodes to determine insertion point
+    // findParentNodes returns the ancestor chain, which is empty for a
+    // root-level node — it never returns null for a node that exists. Treating
+    // only null as "root" left the root branch unreachable and dereferenced an
+    // undefined parent below, so duplicating a top-level node always threw.
     const parentList = findParentNodes(tree, id);
-    if (parentList === null) {
+    if (parentList === null || parentList.length === 0) {
       // Root level node
       const duplicated = deepCloneNode(sourceNode);
       // Extract base name and numeric suffix (e.g., "i" and 1 from "i1")
@@ -306,6 +330,7 @@ export default function XmlEditor({ onNavigateToComparison }: XmlEditorProps) {
             const regeneratedChildren = regenerateIds(newChildren, node.path);
             return { ...node, children: regeneratedChildren };
           }
+          if (!containsTarget(node.id, parent.id)) return node;
           return { ...node, children: update(node.children) };
         });
       };
