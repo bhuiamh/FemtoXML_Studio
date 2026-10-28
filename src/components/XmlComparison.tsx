@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Diff } from "../workers/xmlDiffWorker";
 import { exportToCSV, exportToExcel } from "../utils/export";
-import { Loader, LoadingOverlay, Spinner } from "./ui";
+import { Loader, LoadingOverlay, Spinner, type LoadingState } from "./ui";
 
 type ChangeKind = "added" | "removed" | "changed";
 type Stats = Record<ChangeKind, number>;
@@ -100,6 +100,8 @@ export function XmlComparison() {
   const [leftFileLoading, setLeftFileLoading] = useState(false);
   const [rightFileLoading, setRightFileLoading] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
+  const [exportState, setExportState] = useState<LoadingState | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [leftError, setLeftError] = useState<string | undefined>(undefined);
   const [rightError, setRightError] = useState<string | undefined>(undefined);
   const [differences, setDifferences] = useState<Diff[]>([]);
@@ -330,27 +332,56 @@ export function XmlComparison() {
     overscan: 16,
   });
 
-  const handleExportCSV = () => {
-    const baseName = leftFileName || rightFileName || "femtoxml-studio-report";
-    exportToCSV(filteredDiffs, baseName.replace(/\.xml$/i, ""));
+  /**
+   * Both exports stream their rows and report progress, so a report with tens
+   * of thousands of differences stays within memory and the modal keeps moving.
+   */
+  const runExport = async (kind: "csv" | "xlsx") => {
+    const baseName = (leftFileName || rightFileName || "femtoxml-studio-report").replace(
+      /\.xml$/i,
+      "",
+    );
+    const total = filteredDiffs.length.toLocaleString();
+    setExportError(null);
+    setExportState({
+      title: kind === "csv" ? "Writing the CSV" : "Building the workbook",
+      detail: `${total} difference${filteredDiffs.length === 1 ? "" : "s"}`,
+      percent: 0,
+    });
+
+    const onProgress = (percent: number, detail?: string) =>
+      setExportState({
+        title: kind === "csv" ? "Writing the CSV" : "Building the workbook",
+        detail: detail ?? `${total} differences`,
+        percent,
+      });
+
+    try {
+      if (kind === "csv") await exportToCSV(filteredDiffs, baseName, onProgress);
+      else await exportToExcel(filteredDiffs, baseName, onProgress);
+    } catch (err) {
+      setExportError(
+        `Export failed: ${(err as Error).message}. With a report this large, CSV is the lighter option.`,
+      );
+    }
+    setExportState(null);
   };
 
-  const handleExportExcel = () => {
-    const baseName = leftFileName || rightFileName || "femtoxml-studio-report";
-    exportToExcel(filteredDiffs, baseName.replace(/\.xml$/i, ""));
-  };
+  const handleExportCSV = () => void runExport("csv");
+  const handleExportExcel = () => void runExport("xlsx");
 
   return (
     <>
       <LoadingOverlay
         state={
-          isComparing
+          exportState ??
+          (isComparing
             ? {
                 title: progress?.message ?? "Comparing the two exports",
                 detail: `${leftFileName ?? "Left XML"} ↔ ${rightFileName ?? "Right XML"}`,
                 percent: progress?.percent,
               }
-            : null
+            : null)
         }
       />
       {/* Header with Compare button and search - only for comparison view */}
